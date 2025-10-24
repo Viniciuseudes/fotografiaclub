@@ -27,8 +27,8 @@ export default function HomePage() {
   // Array de imagens de exemplo para o carrossel (use suas imagens reais aqui)
   const exampleImages = [
     "/c11.jpeg",
-    "/c12.jepg",
-    "/c13.jepg",
+    "/c12.jpeg",
+    "/c13.jpeg",
     "/c14.jpeg",
     "/c15.jpeg",
   ];
@@ -112,7 +112,7 @@ export default function HomePage() {
           {/* Imagem de Entrada */}
           <div className="flex-shrink-0 w-32 h-32 sm:w-40 sm:h-40 md:w-48 md:h-48 relative shadow-2xl rounded-xl overflow-hidden border-2 border-white/30">
             <Image
-              src="suafoto.jpgeg"
+              src="suafoto.jpeg"
               alt="Foto de entrada"
               fill
               className="object-cover"
