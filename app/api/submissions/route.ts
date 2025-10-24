@@ -15,17 +15,21 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData()
 
     const name = formData.get("name") as string
-    const email = formData.get("email") as string
     const profession = formData.get("profession") as string
+    const specialty = formData.get("specialty") as string // Pegar especialidade do form
+    const desiredElements = formData.get("desiredElements") as string // Pegar elementos do form
 
-    // Insere dados com o ID do usuário
+    // Create submission record
     const { data: submission, error: submissionError } = await supabase
       .from("submissions")
       .insert({
-        user_id: user.id, 
+        user_id: user.id, // Adiciona o ID do usuário
         user_name: name,
-        user_email: email,
+        user_email: user.email!, // Pegar email do usuário autenticado
         specialty: profession,
+        user_specialty: specialty, // Salvar especialidade
+        desired_elements: desiredElements, // Salvar elementos desejados
+        phone: user.user_metadata?.phone, // Pegar telefone dos metadados do usuário
         status: "pending",
       })
       .select()

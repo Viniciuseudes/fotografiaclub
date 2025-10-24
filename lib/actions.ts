@@ -16,11 +16,15 @@ export async function login(formData: FormData) {
   });
 
   if (error) {
+    // Se houver erro, redireciona de volta para login com mensagem
     return redirect("/login?message=invalid-credentials");
   }
 
-  revalidatePath("/", "layout");
-  redirect("/");
+  // Opcional: Revalidar o caminho se algo na página de formulário depender do estado de login
+  // revalidatePath("/form", "layout"); // Poderia ser /form ou / dependendo do que precisa ser atualizado
+
+  // Redireciona para a página do formulário após login bem-sucedido
+  redirect("/form");
 }
 
 export async function signup(formData: FormData) {
