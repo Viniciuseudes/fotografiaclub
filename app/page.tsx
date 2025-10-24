@@ -26,11 +26,11 @@ import * as React from "react"; // Importar React para useRef
 export default function HomePage() {
   // Array de imagens de exemplo para o carrossel (use suas imagens reais aqui)
   const exampleImages = [
-    "/professional-headshot-of-healthcare-professional-i.jpg",
-    "/professional-healthcare-headshot.jpg",
-    "/professional-healthcare-portrait.jpg",
-    "/professional-doctor-headshot.png",
-    "/professional-medical-portrait.png",
+    "/c11.jpeg",
+    "/c12.jepg",
+    "/c13.jepg",
+    "/c14.jpeg",
+    "/c15.jpeg",
   ];
 
   // Configuração do plugin Autoplay
@@ -112,7 +112,7 @@ export default function HomePage() {
           {/* Imagem de Entrada */}
           <div className="flex-shrink-0 w-32 h-32 sm:w-40 sm:h-40 md:w-48 md:h-48 relative shadow-2xl rounded-xl overflow-hidden border-2 border-white/30">
             <Image
-              src="/casual-photo-of-healthcare-professional.jpg"
+              src="suafoto.jpgeg"
               alt="Foto de entrada"
               fill
               className="object-cover"
@@ -131,7 +131,7 @@ export default function HomePage() {
           {/* Carrossel de Saída Modificado */}
           <div className="w-full max-w-[250px] sm:max-w-[300px] md:max-w-xs lg:max-w-sm xl:max-w-md relative">
             <p className="text-center text-xs font-semibold mb-2 opacity-80">
-              Resultados da IA
+              Nossa entrega
             </p>
             <Carousel
               plugins={[plugin.current]} // Adicionar o plugin Autoplay aqui
