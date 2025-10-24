@@ -1,23 +1,27 @@
 // app/page.tsx
+"use client"; // Necessário para usar hooks como useRef
+
 import Link from "next/link";
 import {
   ArrowRight,
   Sparkles,
-  Camera,
+  // Camera, // Remover a importação da Camera se não for mais usada
   Zap,
   Shield,
   LogIn,
   ChevronsRight,
-} from "lucide-react"; // Adicionei LogIn e ChevronsRight
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
-import Image from "next/image";
+import Image from "next/image"; // Importar o componente Image
 import {
   Carousel,
   CarouselContent,
   CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-} from "@/components/ui/carousel"; // Importar componentes do Carrossel
+  // CarouselNext, // Remover se não usar
+  // CarouselPrevious, // Remover se não usar
+} from "@/components/ui/carousel";
+import Autoplay from "embla-carousel-autoplay"; // Importar o plugin Autoplay
+import * as React from "react"; // Importar React para useRef
 
 export default function HomePage() {
   // Array de imagens de exemplo para o carrossel (use suas imagens reais aqui)
@@ -29,16 +33,27 @@ export default function HomePage() {
     "/professional-medical-portrait.png",
   ];
 
+  // Configuração do plugin Autoplay
+  const plugin = React.useRef<any>(
+    Autoplay({ delay: 2000, stopOnInteraction: false, stopOnMouseEnter: true }) // Delay de 2000ms (2 segundos)
+  );
+
   return (
     // Div principal com fundo gradiente, ocupando toda a tela
     <div className="min-h-screen bg-gradient-to-br from-[#FF6B47] to-[#FF476B] text-white flex flex-col font-sans overflow-x-hidden">
-      {/* Header Original */}
+      {/* Header Modificado */}
       <header className="sticky top-0 z-50 w-full border-b border-white/20 bg-gradient-to-br from-[#FF6B47]/80 to-[#FF476B]/80 backdrop-blur supports-[backdrop-filter]:bg-gradient-to-br supports-[backdrop-filter]:from-[#FF6B47]/60 supports-[backdrop-filter]:to-[#FF476B]/60">
         <div className="container mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
-          {/* Logo */}
+          {/* Logo Modificado */}
           <Link href="/" className="flex items-center space-x-2 group">
-            <div className="w-10 h-10 rounded-xl bg-white/20 group-hover:bg-white/30 flex items-center justify-center transition-colors flex-shrink-0">
-              <Camera className="w-5 h-5 text-white" />
+            {/* Substituir o div com ícone pelo componente Image */}
+            <div className="w-10 h-10 relative group-hover:scale-105 transition-transform flex-shrink-0">
+              <Image
+                src="/logo.png" // Caminho para o seu logo na pasta public
+                alt="Fotograf-IA Logo"
+                fill // Para preencher o container div
+                className="object-contain" // Ajuste conforme necessário (contain, cover, etc.)
+              />
             </div>
             <span className="text-xl font-bold text-white hidden sm:inline">
               Fotograf-IA
@@ -97,7 +112,6 @@ export default function HomePage() {
           {/* Imagem de Entrada */}
           <div className="flex-shrink-0 w-32 h-32 sm:w-40 sm:h-40 md:w-48 md:h-48 relative shadow-2xl rounded-xl overflow-hidden border-2 border-white/30">
             <Image
-              // Substitua pela sua imagem de entrada real
               src="/casual-photo-of-healthcare-professional.jpg"
               alt="Foto de entrada"
               fill
@@ -114,17 +128,21 @@ export default function HomePage() {
             <ChevronsRight className="w-8 h-8 md:w-10 md:h-10 animate-pulse" />
           </div>
 
-          {/* Carrossel de Saída */}
+          {/* Carrossel de Saída Modificado */}
           <div className="w-full max-w-[250px] sm:max-w-[300px] md:max-w-xs lg:max-w-sm xl:max-w-md relative">
             <p className="text-center text-xs font-semibold mb-2 opacity-80">
               Resultados da IA
             </p>
             <Carousel
+              plugins={[plugin.current]} // Adicionar o plugin Autoplay aqui
               opts={{
                 align: "start",
                 loop: true,
               }}
               className="w-full shadow-2xl rounded-xl border-2 border-white/30 overflow-hidden"
+              // Adicionar handlers para pausar/retomar ao passar o mouse (opcional, já configurado no plugin)
+              // onMouseEnter={plugin.current.stop}
+              // onMouseLeave={plugin.current.reset}
             >
               <CarouselContent>
                 {exampleImages.map((src, index) => (
@@ -141,7 +159,6 @@ export default function HomePage() {
                   </CarouselItem>
                 ))}
               </CarouselContent>
-              {/* Adicionar botões Previous/Next se desejar */}
               {/* <CarouselPrevious className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/50 hover:bg-white/80 text-black size-8" /> */}
               {/* <CarouselNext className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/50 hover:bg-white/80 text-black size-8" /> */}
             </Carousel>
@@ -149,13 +166,11 @@ export default function HomePage() {
         </div>
       </main>
 
-      {/* Seção Inferior - Vídeos */}
+      {/* Seção Inferior - Vídeos (sem alterações) */}
       <section className="container mx-auto my-16 py-12 px-4 bg-white/10 rounded-xl shadow-2xl backdrop-blur-sm flex flex-col lg:flex-row items-center justify-between gap-10">
         <div className="lg:w-1/2 flex justify-center items-center w-full">
-          {/* Placeholder para a imagem de vídeo */}
           <div className="relative w-full max-w-sm aspect-video bg-gray-700/50 rounded-lg flex items-center justify-center border border-white/20">
             <span className="text-xl">Imagem Vídeo</span>
-            {/* Ícone de play */}
           </div>
         </div>
         <div className="lg:w-1/2 text-center lg:text-left space-y-4 w-full">
@@ -169,10 +184,9 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Footer / Informações de Contato */}
+      {/* Footer / Informações de Contato (sem alterações) */}
       <footer className="w-full bg-white/10 mt-auto py-8 px-4 rounded-t-xl text-center lg:text-left">
         <div className="container mx-auto flex flex-col lg:flex-row justify-between items-center gap-8">
-          {/* Logo e Nome */}
           <div className="flex flex-col items-center lg:items-start space-y-2">
             <div className="text-2xl font-bold text-black bg-white px-3 py-1 rounded-md shadow-md">
               Fotograf-IA Club
@@ -181,18 +195,15 @@ export default function HomePage() {
               Fusion Clinic
             </div>
           </div>
-          {/* Contatos */}
           <div className="text-sm space-y-1 text-white/90">
             <p>Telefone: (11) 91811-9054</p>
             <p>E-mail: equipe@fusionclinic.com.br</p>
             <p>Rede social: @fusionclinic</p>
           </div>
-          {/* QR Code */}
           <div className="flex flex-col items-center gap-2">
             <p className="text-lg font-semibold text-white/90">
               Fale com a gente!
             </p>
-            {/* Placeholder para o QR Code */}
             <div className="w-24 h-24 bg-white rounded-md flex items-center justify-center text-black font-bold border border-gray-300">
               QR Code
             </div>
