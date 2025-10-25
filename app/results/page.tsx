@@ -322,16 +322,29 @@ export default function ResultsPage() {
                 </div>
               </div>
 
-              <Button
-                size="lg"
-                className="w-full h-14 text-base font-medium rounded-2xl bg-gradient-to-r from-[#ff6b35] to-[#f05520] text-white hover:from-[#f05520] hover:to-[#d13f0f] transition-all shadow-lg hover:shadow-xl"
+              {/* Botão Modificado para WhatsApp */}
+              <Link
+                href="https://wa.me/SEUNUMERO?text=Ol%C3%A1%21%20Gostaria%20de%20desbloquear%20minhas%20fotos%20do%20Fotograf-IA." // <-- SUBSTITUA SEUNUMERO
+                target="_blank"
+                rel="noopener noreferrer"
+                passHref
               >
-                <Zap className="mr-2 w-5 h-5" />
-                Desbloquear Agora
-              </Button>
+                <Button
+                  size="lg"
+                  className="w-full h-14 text-base font-medium rounded-2xl bg-gradient-to-r from-[#ff6b35] to-[#f05520] text-white hover:from-[#f05520] hover:to-[#d13f0f] transition-all shadow-lg hover:shadow-xl"
+                  asChild // Importante para o Link funcionar corretamente com o Button
+                >
+                  <span>
+                    {" "}
+                    {/* Envolver o conteúdo em um span */}
+                    <Zap className="mr-2 w-5 h-5" />
+                    Desbloquear via WhatsApp
+                  </span>
+                </Button>
+              </Link>
 
               <p className="text-xs text-center text-muted-foreground">
-                Pagamento seguro processado via Stripe
+                Pagamento seguro processado via WhatsApp
               </p>
             </div>
           </div>
@@ -353,7 +366,7 @@ export default function ResultsPage() {
           </div>
           <Button
             size="lg"
-            onClick={() => setShowPaywall(true)}
+            onClick={() => setShowPaywall(true)} // Este botão continua abrindo o popup
             className="h-14 px-8 text-base font-medium rounded-2xl bg-gradient-to-r from-[#ff6b35] to-[#f05520] text-white hover:from-[#f05520] hover:to-[#d13f0f] transition-all shadow-lg hover:shadow-xl"
           >
             <Crown className="mr-2 w-5 h-5" />
