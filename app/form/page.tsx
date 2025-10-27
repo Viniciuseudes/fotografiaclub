@@ -47,7 +47,8 @@ type FormStep = 1 | "driveLink" | 2 | 3;
 
 // --- CONSTANTE PARA O LINK DO DRIVE ---
 // ***** IMPORTANTE: Substitua pelo seu link real do Google Drive *****
-const EVENT_DRIVE_LINK = "https://link.do.seu.google.drive/fotos-evento";
+const EVENT_DRIVE_LINK =
+  "https://drive.google.com/drive/folders/1gj2brke8uY2AuethcKVQTUIzi7XSlEKe";
 
 export default function FormPage() {
   const router = useRouter();
