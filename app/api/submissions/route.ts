@@ -1,102 +1,101 @@
-import { type NextRequest, NextResponse } from "next/server"
-import { getSupabaseServerClient } from "@/lib/supabase/server"
-import { getSupabaseAdminClient } from "@/lib/supabase/admin" // Importe o admin client
+// app/api/submissions/route.ts
+
+import { type NextRequest, NextResponse } from "next/server";
+import { getSupabaseServerClient } from "@/lib/supabase/server";
+import { getSupabaseAdminClient } from "@/lib/supabase/admin";
 
 export async function POST(request: NextRequest) {
   try {
     // Cliente padrão para o usuário logado
-    const supabase = await getSupabaseServerClient() 
-    
-    const { data: { user } } = await supabase.auth.getUser()
+    const supabase = await getSupabaseServerClient();
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    
-    const formData = await request.formData()
 
-    const name = formData.get("name") as string
-    const profession = formData.get("profession") as string
-    const specialty = formData.get("specialty") as string // Pegar especialidade do form
-    const desiredElements = formData.get("desiredElements") as string // Pegar elementos do form
+    const formData = await request.formData();
 
-    // Create submission record
+    const name = formData.get("name") as string;
+    const profession = formData.get("profession") as string;
+    const specialty = formData.get("specialty") as string; // Pegar especialidade do form
+    const desiredElements = formData.get("desiredElements") as string; // Pegar elementos do form
+
+    // Validações básicas (pode adicionar mais se necessário)
+    if (!name || !profession || !specialty || !desiredElements) {
+       return NextResponse.json({ error: "Missing required form fields" }, { status: 400 });
+    }
+
+
+    // Cria o registo da submissão SÓ COM OS DADOS DO FORMULÁRIO
     const { data: submission, error: submissionError } = await supabase
       .from("submissions")
       .insert({
         user_id: user.id, // Adiciona o ID do usuário
         user_name: name,
         user_email: user.email!, // Pegar email do usuário autenticado
-        specialty: profession,
-        user_specialty: specialty, // Salvar especialidade
+        specialty: profession, // Mantido como profissão principal
+        user_specialty: specialty, // Salvar especialidade específica
         desired_elements: desiredElements, // Salvar elementos desejados
         phone: user.user_metadata?.phone, // Pegar telefone dos metadados do usuário
-        status: "pending",
+        status: "pending_drive_link", // NOVO STATUS: Indica que o usuário precisa ver o link do drive
       })
       .select()
-      .single()
+      .single();
 
-    if (submissionError) throw submissionError
-
-    // Upload de fotos (continua igual)
-    const photoUrls: string[] = []
-    const entries = Array.from(formData.entries())
-
-    for (const [key, value] of entries) {
-      if (key.startsWith("photo-") && value instanceof File) {
-        const file = value
-        const fileName = `${submission.id}/${Date.now()}-${file.name}`
-
-        const { data: uploadData, error: uploadError } = await supabase.storage.from("photos").upload(fileName, file)
-
-        if (uploadError) {
-          console.error("[v0] Upload error:", uploadError)
-          continue
-        }
-
-        const {
-          data: { publicUrl },
-        } = supabase.storage.from("photos").getPublicUrl(fileName)
-
-        photoUrls.push(publicUrl)
-
-        await supabase.from("photos").insert({
-          submission_id: submission.id,
-          photo_type: "original",
-          photo_url: publicUrl,
-        })
-      }
+    if (submissionError) {
+      console.error("[v0] Submission Error:", submissionError);
+      throw submissionError; // Relança o erro para ser capturado abaixo
     }
 
+    // --- LÓGICA DE UPLOAD DE FOTOS REMOVIDA DAQUI ---
+
+    // Retorna sucesso e o ID da submissão criada
     return NextResponse.json({
       success: true,
       submissionId: submission.id,
-      photoCount: photoUrls.length,
-    })
+    });
+
   } catch (error) {
-    console.error("[v0] API Error:", error)
-    return NextResponse.json({ error: "Failed to create submission" }, { status: 500 })
+    console.error("[v0] API Error in POST /api/submissions:", error);
+    // Verifica se é um erro conhecido do Supabase para dar uma resposta mais específica
+     if (error && typeof error === 'object' && 'code' in error) {
+       return NextResponse.json({ error: `Database error: ${error.message}` }, { status: 500 });
+     }
+    return NextResponse.json(
+      { error: "Failed to create initial submission" },
+      { status: 500 }
+    );
   }
 }
 
+// O método GET permanece igual (usado pelo Admin)
 export async function GET() {
   // Esta rota é usada pelo /admin.
   // Usamos o ADMIN CLIENT para bypassar o RLS e ver TUDO.
   try {
-    const supabase = getSupabaseAdminClient() // Cliente Admin aqui!
+    const supabase = getSupabaseAdminClient(); // Cliente Admin aqui!
 
     const { data: submissions, error } = await supabase
       .from("submissions")
-      .select(`
+      .select(
+        `
         *,
         photos (*)
-      `)
-      .order("created_at", { ascending: false })
+      `
+      )
+      .order("created_at", { ascending: false });
 
-    if (error) throw error
+    if (error) throw error;
 
-    return NextResponse.json({ submissions })
+    return NextResponse.json({ submissions });
   } catch (error) {
-    console.error("[v0] API Error:", error)
-    return NextResponse.json({ error: "Failed to fetch submissions" }, { status: 500 })
+    console.error("[v0] API Error in GET /api/submissions:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch submissions" },
+      { status: 500 }
+    );
   }
 }

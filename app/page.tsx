@@ -44,7 +44,7 @@ export default function HomePage() {
           <Link href="/" className="flex items-center group">
             <div className="w-10 h-10 relative group-hover:scale-105 transition-transform flex-shrink-0">
               <Image
-                src="/logo.png" // Caminho para o seu logo na pasta public
+                src="/logo2345.png" // Caminho para o seu logo na pasta public
                 alt="Fotograf-IA Logo"
                 fill // Para preencher o container div
                 className="object-contain" // Ajuste conforme necessário (contain, cover, etc.)
