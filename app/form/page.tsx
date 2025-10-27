@@ -33,22 +33,20 @@ interface Submission {
 
 interface FormDataState {
   name: string;
-  email: string; // Mantido para exibição, mas backend usará o user.email
+  email: string;
   profession: string;
   specialty: string;
   desiredElements: string;
-  photos: File[];
+  photos: File[]; // Mantém como array, mas só terá 0 ou 1 elemento
 }
 // --- Fim Interfaces ---
 
 // --- NOVO TIPO PARA ETAPAS ---
-// Adicionamos 'driveLink' como uma etapa possível
 type FormStep = 1 | "driveLink" | 2 | 3;
 
 // --- CONSTANTE PARA O LINK DO DRIVE ---
 // ***** IMPORTANTE: Substitua pelo seu link real do Google Drive *****
-const EVENT_DRIVE_LINK =
-  "https://drive.google.com/drive/folders/1gj2brke8uY2AuethcKVQTUIzi7XSlEKe";
+const EVENT_DRIVE_LINK = "https://link.do.seu.google.drive/fotos-evento";
 
 export default function FormPage() {
   const router = useRouter();
@@ -59,22 +57,22 @@ export default function FormPage() {
   const [existingSubmission, setExistingSubmission] =
     useState<Submission | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
-  const [userEmail, setUserEmail] = useState<string>(""); // Para preencher o campo email
+  const [userEmail, setUserEmail] = useState<string>("");
   const [createdSubmissionId, setCreatedSubmissionId] = useState<string | null>(
     null
   );
   const [currentStep, setCurrentStep] = useState<FormStep>(1);
   const [formData, setFormData] = useState<FormDataState>({
     name: "",
-    email: "", // Será preenchido pelo usuário autenticado
+    email: "",
     profession: "",
     specialty: "",
     desiredElements: "",
-    photos: [],
+    photos: [], // Começa vazio
   });
   const [dragActive, setDragActive] = useState(false);
-  const [isSubmittingStep1, setIsSubmittingStep1] = useState(false); // Loading específico da Etapa 1
-  const [isSubmittingPhotos, setIsSubmittingPhotos] = useState(false); // Loading específico do envio final
+  const [isSubmittingStep1, setIsSubmittingStep1] = useState(false);
+  const [isSubmittingPhotos, setIsSubmittingPhotos] = useState(false);
 
   const professions = [
     { value: "medico", label: "Médico(a)" },
@@ -83,7 +81,6 @@ export default function FormPage() {
     { value: "fisioterapeuta", label: "Fisioterapeuta" },
     { value: "nutricionista", label: "Nutricionista" },
     { value: "enfermeiro", label: "Enfermeiro(a)" },
-    // Adicione mais se necessário
   ];
 
   // --- UseEffect para verificar usuário e submissão existente ---
@@ -97,15 +94,14 @@ export default function FormPage() {
 
       if (authError || !user) {
         console.error("Auth Error or No User:", authError);
-        router.push("/login"); // Redireciona se não houver usuário
+        router.push("/login");
         return;
       }
 
       setUserId(user.id);
-      setUserEmail(user.email ?? ""); // Define o email no estado
-      setFormData((prev) => ({ ...prev, email: user.email ?? "" })); // Preenche o formData
+      setUserEmail(user.email ?? "");
+      setFormData((prev) => ({ ...prev, email: user.email ?? "" }));
 
-      // Busca a submissão MAIS RECENTE do usuário
       const { data: submission, error: submissionError } = await supabase
         .from("submissions")
         .select("id, status")
@@ -118,29 +114,24 @@ export default function FormPage() {
         console.error("Erro ao buscar submissão:", submissionError);
       } else if (submission) {
         setExistingSubmission(submission);
-        setCreatedSubmissionId(submission.id); // Guarda o ID se já existe
+        setCreatedSubmissionId(submission.id);
 
         if (submission.status === "completed") {
           router.push(`/results?id=${submission.id}`);
-          return; // Sai se já completou
+          return;
         }
-        // Se for pending_drive_link, vai para a etapa do link
         if (submission.status === "pending_drive_link") {
           setCurrentStep("driveLink");
         }
-        // Se for 'pending' ou 'processing' (após upload das fotos),
-        // a lógica de renderização condicional principal cuidará disso.
       }
-      // Se não encontrou submissão, continua na etapa 1 (default)
-
-      setIsLoadingStatus(false); // Terminou a verificação
+      setIsLoadingStatus(false);
     };
 
     checkUserAndSubmission();
   }, [supabase, router]);
   // --- Fim UseEffect ---
 
-  // --- Funções de Drag and Drop e Manipulação de Fotos ---
+  // --- Funções de Drag and Drop e Manipulação de Fotos (AJUSTADAS PARA UMA FOTO) ---
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -153,30 +144,37 @@ export default function FormPage() {
     e.stopPropagation();
     setDragActive(false);
     if (e.dataTransfer.files?.[0]) {
-      const files = Array.from(e.dataTransfer.files).filter((f) =>
-        f.type.startsWith("image/")
-      );
-      setFormData((prev) => ({
-        ...prev,
-        photos: [...prev.photos, ...files].slice(0, 15),
-      })); // Limita a 15 fotos por segurança
+      const file = e.dataTransfer.files[0];
+      // Aceita apenas se for imagem
+      if (file.type.startsWith("image/")) {
+        setFormData((prev) => ({
+          ...prev,
+          photos: [file], // Substitui o array com apenas UM arquivo
+        }));
+      } else {
+        alert("Por favor, solte apenas arquivos de imagem.");
+      }
     }
   };
 
   const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      const files = Array.from(e.target.files).filter((f) =>
-        f.type.startsWith("image/")
-      );
-      setFormData((prev) => ({
-        ...prev,
-        photos: [...prev.photos, ...files].slice(0, 15),
-      })); // Limita a 15 fotos
-      e.target.value = ""; // Limpa o input para permitir selecionar o mesmo arquivo novamente
+    if (e.target.files?.[0]) {
+      const file = e.target.files[0];
+      // Aceita apenas se for imagem
+      if (file.type.startsWith("image/")) {
+        setFormData((prev) => ({
+          ...prev,
+          photos: [file], // Substitui o array com apenas UM arquivo
+        }));
+      } else {
+        alert("Por favor, selecione apenas arquivos de imagem.");
+      }
+      e.target.value = ""; // Limpa o input
     }
   };
 
   const removePhoto = (index: number) => {
+    // A função de remover ainda funciona (remove a única foto)
     setFormData((prev) => ({
       ...prev,
       photos: prev.photos.filter((_, i) => i !== index),
@@ -184,23 +182,22 @@ export default function FormPage() {
   };
   // --- Fim Funções ---
 
-  // --- Validações ---
+  // --- Validações (AJUSTADAS PARA UMA FOTO) ---
   const canProceedStep1 =
     formData.name &&
     formData.profession &&
     formData.specialty &&
     formData.desiredElements;
-  const canProceedStep2 = formData.photos.length >= 5;
+  const canProceedStep2 = formData.photos.length === 1; // Exige exatamente 1 foto
   // --- Fim Validações ---
 
   // --- Envio da Etapa 1 ---
   const handleStep1Submit = async () => {
     if (!canProceedStep1) return;
-    setIsSubmittingStep1(true); // Inicia loading da etapa 1
+    setIsSubmittingStep1(true);
     try {
       const formDataToSend = new FormData();
       formDataToSend.append("name", formData.name);
-      // formDataToSend.append("email", formData.email); // Não precisa enviar, backend pega do user logado
       formDataToSend.append("profession", formData.profession);
       formDataToSend.append("specialty", formData.specialty);
       formDataToSend.append("desiredElements", formData.desiredElements);
@@ -221,11 +218,11 @@ export default function FormPage() {
       const data = await response.json();
       if (data.submissionId) {
         setCreatedSubmissionId(data.submissionId);
-        setCurrentStep("driveLink"); // Avança para a nova etapa
+        setCurrentStep("driveLink");
         setExistingSubmission({
           id: data.submissionId,
           status: "pending_drive_link",
-        }); // Atualiza o estado da submissão existente
+        });
       } else {
         throw new Error("ID da submissão não recebido da API");
       }
@@ -237,30 +234,29 @@ export default function FormPage() {
         }`
       );
     } finally {
-      setIsSubmittingStep1(false); // Finaliza loading da etapa 1
+      setIsSubmittingStep1(false);
     }
   };
   // --- Fim Envio Etapa 1 ---
 
-  // --- Envio Final (Fotos do Usuário - PATCH) ---
+  // --- Envio Final (Foto do Usuário - PATCH) ---
   const handleSubmitPhotos = async () => {
     if (!createdSubmissionId) {
       alert("Erro: ID da submissão não encontrado.");
       return;
     }
     if (!canProceedStep2) {
-      alert("É necessário anexar pelo menos 5 fotos.");
+      alert("É necessário anexar 1 foto."); // Mensagem ajustada
       return;
     }
 
-    setIsSubmittingPhotos(true); // Inicia loading do envio final
+    setIsSubmittingPhotos(true);
     try {
       const formDataToSend = new FormData();
-      formData.photos.forEach((photo, index) => {
-        // Usa o nome esperado pela API PATCH (ou ajuste a API PATCH para `user-photo-x`)
-        formDataToSend.append(`user-photo-${index}`, photo);
-      });
-      // Envia o novo status para indicar que as fotos foram enviadas
+      // Envia a única foto
+      if (formData.photos[0]) {
+        formDataToSend.append(`user-photo-0`, formData.photos[0]);
+      }
       formDataToSend.append("status", "pending");
 
       const response = await fetch(`/api/submissions/${createdSubmissionId}`, {
@@ -269,28 +265,46 @@ export default function FormPage() {
       });
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({
-          error: "Erro desconhecido ao processar resposta da API",
-        }));
-        console.error("Submit Photos Error Response:", errorData);
-        throw new Error(errorData.error || "Falha ao enviar fotos");
+        let errorData = {
+          error: `API respondeu com status ${response.status}`,
+        };
+        try {
+          errorData = await response.json();
+        } catch (parseError) {
+          console.error("Falha ao parsear erro JSON da API:", parseError);
+          try {
+            const rawText = await response.text();
+            console.error("Resposta de erro bruta da API:", rawText);
+            errorData.error = `Erro da API (${
+              response.status
+            }): ${rawText.substring(0, 150)}...`;
+          } catch (textError) {
+            console.error(
+              "Falha ao obter texto bruto da resposta de erro:",
+              textError
+            );
+          }
+        }
+        console.error("Dados do erro ao enviar fotos:", errorData);
+        throw new Error(
+          errorData.error ||
+            `Falha ao enviar fotos (Status: ${response.status})`
+        );
       }
 
-      // Atualiza o estado local para refletir a mudança de status
       setExistingSubmission((prev) =>
         prev ? { ...prev, status: "pending" } : null
       );
-      // Redireciona para a página de resultados
       router.push(`/results?id=${createdSubmissionId}`);
     } catch (error) {
-      console.error("[v0] Erro ao enviar fotos:", error);
+      console.error("[v0] Erro completo ao enviar fotos:", error); // Log mais detalhado
       alert(
         `Erro ao enviar fotos: ${
           error instanceof Error ? error.message : "Erro desconhecido"
         }`
       );
     } finally {
-      setIsSubmittingPhotos(false); // Finaliza loading do envio final
+      setIsSubmittingPhotos(false);
     }
   };
   // --- Fim Envio Final ---
@@ -298,16 +312,16 @@ export default function FormPage() {
   // --- Navegação entre Etapas ---
   const handleNext = () => {
     if (currentStep === 1 && canProceedStep1) {
-      handleStep1Submit(); // Chama o envio da Etapa 1
+      handleStep1Submit();
     } else if (currentStep === 2 && canProceedStep2) {
-      setCurrentStep(3); // Vai para a Confirmação
+      setCurrentStep(3);
     }
   };
 
   const handleBack = () => {
     if (currentStep === 2) setCurrentStep("driveLink");
     else if (currentStep === 3) setCurrentStep(2);
-    else if (currentStep === "driveLink") setCurrentStep(1); // Permite voltar da tela do Drive Link
+    else if (currentStep === "driveLink") setCurrentStep(1);
   };
   // --- Fim Navegação ---
 
@@ -356,16 +370,16 @@ export default function FormPage() {
         Gostaria de transformar suas próprias fotos com nossa IA?
       </p>
       <Button
-        onClick={() => setCurrentStep(2)} // Vai para a etapa de Upload (Etapa 2)
+        onClick={() => setCurrentStep(2)}
         size="lg"
         className="w-full h-14 text-base font-medium rounded-2xl bg-gradient-to-r from-[#ff6b35] to-[#f05520] text-white hover:from-[#f05520] hover:to-[#d13f0f] transition-all shadow-lg hover:shadow-xl"
-        disabled={isSubmittingStep1} // Desabilita se ainda estiver enviando a etapa 1
+        disabled={isSubmittingStep1}
       >
         <ImageUp className="mr-2 w-5 h-5" />
         Sim, Transformar Minhas Fotos com IA
       </Button>
       <Button
-        onClick={handleBack} // Volta para a Etapa 1
+        onClick={handleBack}
         variant="ghost"
         size="sm"
         className="mt-4 text-muted-foreground"
@@ -376,6 +390,10 @@ export default function FormPage() {
     </div>
   );
   // --- Fim Componente ---
+
+  // ADICIONE AQUI O CONSOLE LOG PARA DEBUG:
+  console.log("Estado atual do formData:", formData);
+  console.log("Etapa atual:", currentStep);
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -390,7 +408,6 @@ export default function FormPage() {
               Fotograf-IA
             </span>
           </Link>
-          {/* Mostra 'Minhas Fotos/Status' se já existe submissão E NÃO está na etapa 1 */}
           {existingSubmission && currentStep !== 1 ? (
             <Button
               variant="outline"
@@ -400,10 +417,9 @@ export default function FormPage() {
               }
               className="border-[#ffe8df]"
             >
-              Ver Status/Resultados {/* Texto mais genérico */}
+              Ver Status/Resultados
             </Button>
           ) : (
-            // Senão, mostra o botão Voltar (exceto na primeira etapa)
             currentStep !== 1 && (
               <Button
                 variant="ghost"
@@ -421,7 +437,6 @@ export default function FormPage() {
 
       <main className="container mx-auto px-6 py-12 max-w-3xl flex-grow">
         {/* --- Renderização Condicional Principal --- */}
-        {/* Mostra status PENDING ou PROCESSING (depois do upload final) */}
         {existingSubmission &&
         (existingSubmission.status === "pending" ||
           existingSubmission.status === "processing") ? (
@@ -431,19 +446,16 @@ export default function FormPage() {
             </div>
             <h1 className="text-4xl font-bold text-foreground">
               {existingSubmission.status === "pending"
-                ? "Suas Fotos Estão na Fila!"
-                : "Processando suas Fotos"}
+                ? "Sua Foto Está na Fila!" // Ajustado para singular
+                : "Processando sua Foto"}{" "}
+              // Ajustado para singular
             </h1>
             <p className="text-lg text-muted-foreground leading-relaxed max-w-md mx-auto">
-              {" "}
-              {/* Adicionado mx-auto */}
-              Nossa IA está trabalhando nelas. Você receberá um e-mail quando
-              estiverem prontas (geralmente em até 24 horas).
+              Nossa IA está trabalhando nela. Você receberá um e-mail quando
+              estiver pronta (geralmente em até 24 horas).
             </p>
             <div className="bg-gradient-to-br from-[#fff5f2] to-[#ffe8df] rounded-3xl border-2 border-[#ff8c5c] p-8 space-y-4 w-full max-w-md">
               <div className="flex items-center justify-center gap-3">
-                {" "}
-                {/* Animação de bolinhas */}
                 <div
                   className="w-3 h-3 rounded-full bg-[#ff6b35] animate-bounce"
                   style={{ animationDelay: "0ms" }}
@@ -467,7 +479,7 @@ export default function FormPage() {
             <Button
               onClick={() =>
                 router.push(`/results?id=${existingSubmission.id}`)
-              } // Apenas atualiza
+              }
               variant="outline"
               className="border-2 border-[#ffe8df] bg-transparent mt-6"
             >
@@ -477,30 +489,19 @@ export default function FormPage() {
         ) : (
           // Mostra Formulário (Etapa 1, driveLink, 2 ou 3)
           <>
-            {/* Progress Steps (Ajustado para não mostrar na etapa driveLink) */}
             {currentStep !== "driveLink" && (
               <div className="mb-12">
-                {/* Lógica para destacar a etapa correta com CORREÇÃO do erro */}
                 {(() => {
-                  // Variável numérica auxiliar para controle visual
                   let displayStepNumeric: number;
+                  if (currentStep === 1) displayStepNumeric = 1;
+                  else if (currentStep === "driveLink")
+                    displayStepNumeric = 1; // Mantém visual na etapa 1
+                  else if (currentStep === 2) displayStepNumeric = 2;
+                  else if (currentStep === 3) displayStepNumeric = 3;
+                  else displayStepNumeric = 1;
 
-                  if (currentStep === 1) {
-                    displayStepNumeric = 1;
-                  } else if ((currentStep as unknown) === "driveLink") {
-                    // Decidimos qual step visual representar quando for "driveLink"
-                    // Mantém destacando a etapa 1 visualmente
-                    displayStepNumeric = 1;
-                  } else if (currentStep === 2) {
-                    displayStepNumeric = 2;
-                  } else if (currentStep === 3) {
-                    displayStepNumeric = 3;
-                  } else {
-                    displayStepNumeric = 1; // Fallback
-                  }
-
-                  const steps = [1, 2, 3]; // As etapas visuais
-                  const labels = ["Informações", "Suas Fotos", "Confirmação"];
+                  const steps = [1, 2, 3];
+                  const labels = ["Informações", "Sua Foto", "Confirmação"]; // Ajustado label
 
                   return (
                     <>
@@ -574,7 +575,6 @@ export default function FormPage() {
                 </div>
                 {/* Conteúdo Step 1 (Inputs) */}
                 <div className="bg-white rounded-3xl border-2 border-[#ffe8df] p-8 space-y-6 shadow-lg">
-                  {/* Input Nome */}
                   <div className="space-y-2">
                     <Label htmlFor="name" className="text-base font-medium">
                       Nome completo
@@ -590,7 +590,6 @@ export default function FormPage() {
                       required
                     />
                   </div>
-                  {/* Input Email (Desabilitado) */}
                   <div className="space-y-2">
                     <Label htmlFor="email" className="text-base font-medium">
                       E-mail (Login)
@@ -604,7 +603,6 @@ export default function FormPage() {
                       readOnly
                     />
                   </div>
-                  {/* Radio Profissão */}
                   <div className="space-y-3">
                     <Label className="text-base font-medium">Profissão</Label>
                     <RadioGroup
@@ -633,7 +631,6 @@ export default function FormPage() {
                       </div>
                     </RadioGroup>
                   </div>
-                  {/* Input Especialidade */}
                   <div className="space-y-2">
                     <Label
                       htmlFor="specialty"
@@ -652,7 +649,6 @@ export default function FormPage() {
                       required
                     />
                   </div>
-                  {/* Textarea Elementos */}
                   <div className="space-y-2">
                     <Label
                       htmlFor="desiredElements"
@@ -679,7 +675,6 @@ export default function FormPage() {
                     </p>
                   </div>
                 </div>
-                {/* Botão Continuar Step 1 */}
                 <Button
                   onClick={handleNext}
                   disabled={!canProceedStep1 || isSubmittingStep1}
@@ -705,19 +700,19 @@ export default function FormPage() {
 
             {currentStep === 2 && (
               <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                {/* Cabeçalho Step 2 */}
+                {/* Cabeçalho Step 2 (AJUSTADO TEXTO) */}
                 <div className="text-center space-y-2">
                   <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-[#fff5f2] to-[#ffe8df] mb-4">
                     <Upload className="w-8 h-8 text-[#ff6b35]" />
                   </div>
                   <h2 className="text-3xl font-bold text-foreground">
-                    Envie Suas Fotos
+                    Envie Sua Foto
                   </h2>
                   <p className="text-muted-foreground">
-                    Mínimo de 5 fotos para melhores resultados
+                    Envie 1 foto para a IA processar
                   </p>
                 </div>
-                {/* Área de Upload */}
+                {/* Área de Upload (AJUSTADO INPUT) */}
                 <div
                   className={`relative bg-white rounded-3xl border-2 border-dashed p-12 text-center transition-all ${
                     dragActive
@@ -731,45 +726,35 @@ export default function FormPage() {
                 >
                   <input
                     type="file"
-                    multiple
+                    // REMOVIDO multiple
                     accept="image/*"
                     onChange={handleFileInput}
                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                   />
                   <div className="space-y-4 pointer-events-none">
-                    {" "}
-                    {/* Evita que os elementos internos capturem o drop */}
                     <div className="w-20 h-20 mx-auto rounded-2xl bg-gradient-to-br from-[#fff5f2] to-[#ffe8df] flex items-center justify-center">
                       <Upload className="w-10 h-10 text-[#ff6b35]" />
                     </div>
                     <div>
                       <p className="text-lg font-medium text-foreground mb-1">
-                        Arraste suas fotos aqui
+                        Arraste sua foto aqui
                       </p>
                       <p className="text-sm text-muted-foreground">
                         ou clique para selecionar
                       </p>
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      PNG, JPG até 10MB cada
+                      PNG, JPG até 10MB
                     </p>
                   </div>
                 </div>
-                {/* Preview das Fotos */}
+                {/* Preview da Foto (AJUSTADO TEXTO) */}
                 {formData.photos.length > 0 && (
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
                       <p className="text-sm font-medium text-foreground">
-                        {formData.photos.length} foto
-                        {formData.photos.length !== 1 ? "s" : ""} selecionada
-                        {formData.photos.length !== 1 ? "s" : ""}
+                        {formData.photos.length} foto selecionada
                       </p>
-                      {formData.photos.length < 5 && (
-                        <p className="text-sm text-[#ff6b35] font-medium">
-                          Faltam {5 - formData.photos.length} foto
-                          {5 - formData.photos.length !== 1 ? "s" : ""}
-                        </p>
-                      )}
                     </div>
                     <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4">
                       {formData.photos.map((photo, index) => (
@@ -796,7 +781,7 @@ export default function FormPage() {
                     </div>
                   </div>
                 )}
-                {/* Botões Step 2 */}
+                {/* Botões Step 2 (AJUSTADO disabled) */}
                 <div className="flex gap-4">
                   <Button
                     onClick={handleBack}
@@ -809,7 +794,7 @@ export default function FormPage() {
                   </Button>
                   <Button
                     onClick={handleNext}
-                    disabled={!canProceedStep2 || isSubmittingPhotos}
+                    disabled={!canProceedStep2 || isSubmittingPhotos} // Usa a nova validação
                     size="lg"
                     className="flex-1 h-14 text-base font-medium rounded-2xl bg-gradient-to-r from-[#ff6b35] to-[#f05520] text-white hover:from-[#f05520] hover:to-[#d13f0f] transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
                   >
@@ -830,7 +815,7 @@ export default function FormPage() {
                     Confirme os Dados
                   </h2>
                   <p className="text-muted-foreground">
-                    Revise as informações antes de enviar suas fotos para a IA
+                    Revise as informações antes de enviar sua foto para a IA
                   </p>
                 </div>
                 {/* Resumo Informações Pessoais */}
@@ -842,62 +827,57 @@ export default function FormPage() {
                   </div>
                   <div className="p-6 space-y-4">
                     <div className="flex flex-col sm:flex-row justify-between sm:items-center py-3 border-b border-[#ffe8df]">
-                      {" "}
                       <span className="text-muted-foreground text-sm sm:text-base">
                         Nome
-                      </span>{" "}
+                      </span>
                       <span className="font-medium text-foreground text-right">
                         {formData.name}
-                      </span>{" "}
+                      </span>
                     </div>
                     <div className="flex flex-col sm:flex-row justify-between sm:items-center py-3 border-b border-[#ffe8df]">
-                      {" "}
                       <span className="text-muted-foreground text-sm sm:text-base">
                         E-mail
-                      </span>{" "}
+                      </span>
                       <span className="font-medium text-foreground text-right">
                         {formData.email}
-                      </span>{" "}
+                      </span>
                     </div>
                     <div className="flex flex-col sm:flex-row justify-between sm:items-center py-3 border-b border-[#ffe8df]">
-                      {" "}
                       <span className="text-muted-foreground text-sm sm:text-base">
                         Profissão
-                      </span>{" "}
+                      </span>
                       <span className="font-medium text-foreground text-right">
                         {
                           professions.find(
                             (p) => p.value === formData.profession
                           )?.label
                         }
-                      </span>{" "}
+                      </span>
                     </div>
                     <div className="flex flex-col sm:flex-row justify-between sm:items-center py-3 border-b border-[#ffe8df]">
-                      {" "}
                       <span className="text-muted-foreground text-sm sm:text-base">
                         Especialidade
-                      </span>{" "}
+                      </span>
                       <span className="font-medium text-foreground text-right">
                         {formData.specialty}
-                      </span>{" "}
+                      </span>
                     </div>
                     <div className="py-3">
-                      {" "}
                       <span className="text-muted-foreground block mb-2 text-sm sm:text-base">
                         Elementos desejados
-                      </span>{" "}
+                      </span>
                       <p className="font-medium text-foreground text-sm leading-relaxed">
                         {formData.desiredElements ||
                           "Nenhum elemento específico descrito."}
-                      </p>{" "}
+                      </p>
                     </div>
                   </div>
                 </div>
-                {/* Resumo Fotos Enviadas */}
+                {/* Resumo Foto Enviada (AJUSTADO TEXTO) */}
                 <div className="bg-white rounded-3xl border-2 border-[#ffe8df] overflow-hidden shadow-lg">
                   <div className="bg-gradient-to-r from-[#fff5f2] to-[#ffe8df] p-6 border-b-2 border-[#ffe8df]">
                     <h3 className="text-lg font-semibold text-foreground">
-                      Fotos a Enviar ({formData.photos.length})
+                      Foto a Enviar ({formData.photos.length})
                     </h3>
                   </div>
                   <div className="p-6">
@@ -919,16 +899,16 @@ export default function FormPage() {
                     </div>
                   </div>
                 </div>
-                {/* Aviso */}
+                {/* Aviso (AJUSTADO TEXTO) */}
                 <div className="bg-gradient-to-br from-[#fff5f2] to-[#ffe8df] rounded-3xl border-2 border-[#ff8c5c] p-6">
                   <p className="text-sm text-foreground leading-relaxed">
-                    Ao clicar em "Enviar Minhas Fotos", você concorda que as
-                    fotos acima serão processadas por nossa IA para gerar
-                    imagens profissionais. Você receberá um e-mail quando suas
-                    fotos estiverem prontas (até 24 horas).
+                    Ao clicar em "Enviar Minha Foto", você concorda que a foto
+                    acima será processada por nossa IA para gerar imagens
+                    profissionais. Você receberá um e-mail quando suas fotos
+                    estiverem prontas (até 24 horas).
                   </p>
                 </div>
-                {/* Botões Step 3 */}
+                {/* Botões Step 3 (AJUSTADO TEXTO DO BOTÃO ENVIAR) */}
                 <div className="flex flex-col sm:flex-row gap-4">
                   <Button
                     onClick={handleBack}
@@ -951,7 +931,7 @@ export default function FormPage() {
                         Enviando...
                       </>
                     ) : (
-                      "Enviar Minhas Fotos"
+                      "Enviar Minha Foto" // Texto ajustado
                     )}
                     {!isSubmittingPhotos && <Check className="ml-2 w-5 h-5" />}
                   </Button>
