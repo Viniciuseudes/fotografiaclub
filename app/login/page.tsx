@@ -9,7 +9,7 @@ import { login } from "@/lib/actions";
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ message?: string }>;
+  searchParams: Promise<{ message?: string }>; // Mantido como Promise
 }) {
   // CORREÇÃO 2: Usar 'await' para 'desembrulhar' a promise
   const { message } = await searchParams;
@@ -62,14 +62,26 @@ export default async function LoginPage({
               />
             </div>
 
+            {/* --- BLOCO DE MENSAGEM MODIFICADO --- */}
             {message && (
-              <p className="text-sm text-center text-red-600 bg-red-50 p-3 rounded-lg border border-red-200">
+              <p
+                className={`text-sm text-center p-3 rounded-lg border ${
+                  message === "invalid-credentials"
+                    ? "text-red-600 bg-red-50 border-red-200"
+                    : message === "signup-success"
+                    ? "text-green-700 bg-green-50 border-green-200" // Estilo verde
+                    : "text-gray-600 bg-gray-50 border-gray-200" // Estilo padrão/fallback (opcional)
+                }`}
+              >
                 {message === "invalid-credentials" &&
                   "Credenciais inválidas. Tente novamente."}
-                {message === "check-email" &&
-                  "Cadastro realizado! Verifique seu e-mail para confirmar a conta."}
+                {message === "signup-success" && // Nova condição
+                  "Cadastro realizado com sucesso! Faça seu login"}{" "}
+                {/* Nova mensagem */}
+                {/* Mensagens para outros possíveis valores de 'message' podem ser adicionadas aqui */}
               </p>
             )}
+            {/* --- FIM DO BLOCO MODIFICADO --- */}
 
             <Button
               type="submit"

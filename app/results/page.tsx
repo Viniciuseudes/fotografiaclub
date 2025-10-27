@@ -45,16 +45,26 @@ export default function ResultsPage() {
   useEffect(() => {
     if (submissionId) {
       fetchSubmission();
+    } else {
+      setLoading(false); // Se não houver ID, para de carregar
     }
   }, [submissionId]);
 
   const fetchSubmission = async () => {
+    setLoading(true); // Garante que o loading seja ativado a cada fetch
     try {
       const response = await fetch(`/api/submissions/${submissionId}`);
-      const data = await response.json();
-      setSubmission(data.submission);
+      if (!response.ok) {
+        // Trata erros como 404 (não encontrado)
+        console.error(`[v0] Error fetching submission: ${response.status}`);
+        setSubmission(null); // Define como nulo se não encontrar
+      } else {
+        const data = await response.json();
+        setSubmission(data.submission);
+      }
     } catch (error) {
       console.error("[v0] Error fetching submission:", error);
+      setSubmission(null); // Define como nulo em caso de erro de rede, etc.
     } finally {
       setLoading(false);
     }
@@ -84,6 +94,9 @@ export default function ResultsPage() {
           <h2 className="text-2xl font-bold text-foreground">
             Submissão não encontrada
           </h2>
+          <p className="text-muted-foreground">
+            Verifique o link ou tente novamente.
+          </p>
           <Button
             asChild
             className="bg-gradient-to-r from-[#ff6b35] to-[#f05520]"
@@ -98,11 +111,16 @@ export default function ResultsPage() {
   const processedPhotos = submission.photos.filter(
     (p) => p.photo_type === "processed"
   );
-  const isPending = submission.status === "pending";
-  const isProcessing = submission.status === "processing";
-  const isCompleted = submission.status === "completed";
 
-  if (isPending || isProcessing) {
+  // --- MODIFICAÇÃO PARA INCLUIR pending_drive_link ---
+  // Considere 'pending_drive_link' também como um estado de espera/processamento inicial
+  const isWaitingOrProcessing =
+    submission.status === "pending" ||
+    submission.status === "processing" ||
+    submission.status === "pending_drive_link"; // Adicionado aqui
+
+  // Use a nova variável na condição if
+  if (isWaitingOrProcessing) {
     return (
       <div className="min-h-screen bg-background">
         <header className="border-b border-[#ffe8df] bg-background/95 backdrop-blur sticky top-0 z-50">
@@ -123,8 +141,13 @@ export default function ResultsPage() {
             <div className="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-gradient-to-br from-[#fff5f2] to-[#ffe8df] mb-4 animate-pulse">
               <Clock className="w-10 h-10 text-[#ff6b35]" />
             </div>
+            {/* Ajusta o título se necessário */}
             <h1 className="text-4xl font-bold text-foreground">
-              Processando suas Fotos
+              {submission.status === "pending_drive_link"
+                ? "Enviando Fotos..."
+                : submission.status === "pending"
+                ? "Suas Fotos Estão na Fila!"
+                : "Processando suas Fotos"}
             </h1>
             <p className="text-lg text-muted-foreground leading-relaxed">
               Nossa IA está trabalhando para criar suas fotos profissionais.
@@ -147,15 +170,27 @@ export default function ResultsPage() {
                 />
               </div>
               <p className="text-sm text-foreground font-medium">
-                Status:{" "}
-                {isPending ? "Aguardando processamento" : "Em processamento"}
+                Status: {/* Ajusta o texto do status */}
+                {submission.status === "pending_drive_link"
+                  ? "Enviando..."
+                  : submission.status === "pending"
+                  ? "Aguardando processamento"
+                  : "Em processamento"}
               </p>
             </div>
 
             <Button
-              asChild
               variant="outline"
               className="border-2 border-[#ffe8df] bg-transparent"
+              // Adiciona um refresh para o caso de ter caído no pending_drive_link por timing
+              onClick={() => window.location.reload()}
+            >
+              <span>Verificar Status</span>
+            </Button>
+            <Button
+              asChild
+              variant="link"
+              className="text-muted-foreground text-sm block mx-auto mt-2"
             >
               <Link href="/">Voltar ao Início</Link>
             </Button>
@@ -164,7 +199,10 @@ export default function ResultsPage() {
       </div>
     );
   }
+  // --- FIM DA MODIFICAÇÃO ---
 
+  // Se NÃO for nenhum dos status acima (nem loading, nem not found, nem waiting/processing),
+  // mostra a página de resultados completos/paywall
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -194,185 +232,201 @@ export default function ResultsPage() {
             Suas Fotos Estão Prontas!
           </h1>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-            Geramos {processedPhotos.length} fotos profissionais usando IA.
-            Desbloqueie todas para usar em seus perfis.
+            {processedPhotos.length > 0
+              ? `Geramos ${processedPhotos.length} fotos profissionais usando IA. Desbloqueie todas para usar em seus perfis.`
+              : "As fotos processadas estarão disponíveis aqui em breve."}
           </p>
         </div>
 
         {/* Photo Gallery */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
-          {processedPhotos.map((photo, index) => {
-            const isLocked = index > 0; // First photo is preview, rest are locked
+        {processedPhotos.length > 0 ? (
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+            {processedPhotos.map((photo, index) => {
+              const isLocked = index > 0; // First photo is preview, rest are locked
 
-            return (
-              <div
-                key={photo.id}
-                className="relative group cursor-pointer animate-in fade-in slide-in-from-bottom-4 duration-500"
-                style={{ animationDelay: `${index * 100}ms` }}
-                onClick={() => handlePhotoClick(isLocked)}
-              >
-                <div className="relative aspect-[3/4] rounded-3xl overflow-hidden bg-[#fff5f2] border-2 border-[#ffe8df] shadow-lg transition-all group-hover:shadow-2xl group-hover:scale-[1.02]">
-                  <Image
-                    src={photo.photo_url || "/placeholder.svg"}
-                    alt={`Generated photo ${index + 1}`}
-                    fill
-                    className={`object-cover transition-all ${
-                      isLocked ? "blur-md" : ""
-                    }`}
-                  />
-
-                  {/* Locked Overlay */}
-                  {isLocked && (
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent flex items-center justify-center">
-                      <div className="text-center space-y-3">
-                        <div className="w-16 h-16 mx-auto rounded-2xl bg-white/90 backdrop-blur-sm flex items-center justify-center shadow-xl">
-                          <Lock className="w-8 h-8 text-[#ff6b35]" />
-                        </div>
-                        <p className="text-white font-semibold text-sm px-4">
-                          Clique para desbloquear
-                        </p>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Preview Badge */}
-                  {!isLocked && (
-                    <div className="absolute top-4 left-4 px-3 py-1.5 rounded-full bg-gradient-to-r from-[#ff6b35] to-[#f05520] text-white text-sm font-medium shadow-lg">
-                      <span className="flex items-center">
-                        <Check className="w-3 h-3 mr-1" />
-                        Preview
-                      </span>
-                    </div>
-                  )}
-                </div>
-
-                {/* Download Button (only for unlocked) */}
-                {!isLocked && (
-                  <a
-                    href={photo.photo_url}
-                    download
-                    onClick={(e) => e.stopPropagation()}
-                    className="absolute bottom-4 right-4"
-                  >
-                    <Button
-                      size="sm"
-                      className="rounded-xl bg-white/90 backdrop-blur-sm text-foreground hover:bg-white shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                      <Download className="w-4 h-4" />
-                    </Button>
-                  </a>
-                )}
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Paywall Card */}
-        {showPaywall && (
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-6 animate-in fade-in duration-300">
-            <div className="bg-white rounded-3xl max-w-lg w-full p-8 space-y-6 shadow-2xl animate-in zoom-in slide-in-from-bottom-8 duration-500">
-              <button
-                onClick={() => setShowPaywall(false)}
-                className="absolute top-4 right-4 w-10 h-10 rounded-full bg-[#fff5f2] hover:bg-[#ffe8df] flex items-center justify-center transition-colors"
-              >
-                ×
-              </button>
-
-              <div className="text-center space-y-4">
-                <div className="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-gradient-to-br from-[#fff5f2] to-[#ffe8df]">
-                  <Crown className="w-10 h-10 text-[#ff6b35]" />
-                </div>
-                <h2 className="text-3xl font-bold text-foreground">
-                  Desbloqueie Todas as Fotos
-                </h2>
-                <p className="text-muted-foreground leading-relaxed">
-                  Tenha acesso completo às {processedPhotos.length} fotos
-                  profissionais em alta resolução
-                </p>
-              </div>
-
-              {/* Pricing */}
-              <div className="bg-gradient-to-br from-[#fff5f2] to-[#ffe8df] rounded-2xl border-2 border-[#ff8c5c] p-6 space-y-4">
-                <div className="text-center">
-                  <div className="flex items-baseline justify-center gap-2">
-                    <span className="text-5xl font-bold text-[#ff6b35]">
-                      R$ 49
-                    </span>
-                    <span className="text-muted-foreground">/pacote</span>
-                  </div>
-                  <p className="text-sm text-muted-foreground mt-2">
-                    Pagamento único
-                  </p>
-                </div>
-
-                <div className="space-y-3 pt-4 border-t-2 border-[#ffe8df]">
-                  {[
-                    `${processedPhotos.length} fotos profissionais em alta resolução`,
-                    "Download ilimitado",
-                    "Uso comercial permitido",
-                    "Suporte prioritário",
-                  ].map((feature, index) => (
-                    <div key={index} className="flex items-center gap-3">
-                      <div className="w-6 h-6 rounded-full bg-[#ff6b35] flex items-center justify-center flex-shrink-0">
-                        <Check className="w-4 h-4 text-white" />
-                      </div>
-                      <span className="text-sm text-foreground">{feature}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Botão Modificado para WhatsApp */}
-              <Link
-                href="https://wa.me/SEUNUMERO?text=Ol%C3%A1%21%20Gostaria%20de%20desbloquear%20minhas%20fotos%20do%20Fotograf-IA." // <-- SUBSTITUA SEUNUMERO
-                target="_blank"
-                rel="noopener noreferrer"
-                passHref
-              >
-                <Button
-                  size="lg"
-                  className="w-full h-14 text-base font-medium rounded-2xl bg-gradient-to-r from-[#ff6b35] to-[#f05520] text-white hover:from-[#f05520] hover:to-[#d13f0f] transition-all shadow-lg hover:shadow-xl"
-                  asChild // Importante para o Link funcionar corretamente com o Button
+              return (
+                <div
+                  key={photo.id}
+                  className="relative group cursor-pointer animate-in fade-in slide-in-from-bottom-4 duration-500"
+                  style={{ animationDelay: `${index * 100}ms` }}
+                  onClick={() => handlePhotoClick(isLocked)}
                 >
-                  <span>
-                    {" "}
-                    {/* Envolver o conteúdo em um span */}
-                    <Zap className="mr-2 w-5 h-5" />
-                    Desbloquear via WhatsApp
-                  </span>
-                </Button>
-              </Link>
+                  <div className="relative aspect-[3/4] rounded-3xl overflow-hidden bg-[#fff5f2] border-2 border-[#ffe8df] shadow-lg transition-all group-hover:shadow-2xl group-hover:scale-[1.02]">
+                    <Image
+                      src={photo.photo_url || "/placeholder.svg"}
+                      alt={`Generated photo ${index + 1}`}
+                      fill
+                      className={`object-cover transition-all ${
+                        isLocked ? "blur-md" : ""
+                      }`}
+                      priority={index === 0} // Prioriza o carregamento da primeira imagem
+                      sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                    />
 
-              <p className="text-xs text-center text-muted-foreground">
-                Pagamento seguro processado via WhatsApp
-              </p>
-            </div>
+                    {/* Locked Overlay */}
+                    {isLocked && (
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent flex items-center justify-center">
+                        <div className="text-center space-y-3">
+                          <div className="w-16 h-16 mx-auto rounded-2xl bg-white/90 backdrop-blur-sm flex items-center justify-center shadow-xl">
+                            <Lock className="w-8 h-8 text-[#ff6b35]" />
+                          </div>
+                          <p className="text-white font-semibold text-sm px-4">
+                            Clique para desbloquear
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Preview Badge */}
+                    {!isLocked && (
+                      <div className="absolute top-4 left-4 px-3 py-1.5 rounded-full bg-gradient-to-r from-[#ff6b35] to-[#f05520] text-white text-sm font-medium shadow-lg">
+                        <span className="flex items-center">
+                          <Check className="w-3 h-3 mr-1" />
+                          Preview
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Download Button (only for unlocked) */}
+                  {!isLocked && (
+                    <a
+                      href={photo.photo_url}
+                      download={`fotograf_ia_${submissionId}_preview.jpg`} // Adiciona nome de arquivo sugerido
+                      onClick={(e) => e.stopPropagation()}
+                      className="absolute bottom-4 right-4"
+                      aria-label="Baixar foto de preview"
+                    >
+                      <Button
+                        size="sm"
+                        className="rounded-xl bg-white/90 backdrop-blur-sm text-foreground hover:bg-white shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <Download className="w-4 h-4" />
+                      </Button>
+                    </a>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="text-center text-muted-foreground mb-12">
+            Nenhuma foto processada encontrada para esta submissão.
           </div>
         )}
 
-        {/* CTA Section */}
-        <div className="bg-gradient-to-br from-[#fff5f2] via-[#ffe8df] to-[#ffd1bf] rounded-3xl border-2 border-[#ff8c5c] p-8 md:p-12 text-center space-y-6 shadow-xl">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-white shadow-lg">
-            <Crown className="w-8 h-8 text-[#ff6b35]" />
+        {/* Paywall Card */}
+        {showPaywall &&
+          processedPhotos.length > 0 && ( // Só mostra se houver fotos
+            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-6 animate-in fade-in duration-300">
+              <div className="bg-white rounded-3xl max-w-lg w-full p-8 space-y-6 shadow-2xl animate-in zoom-in slide-in-from-bottom-8 duration-500 relative">
+                <button
+                  onClick={() => setShowPaywall(false)}
+                  className="absolute top-4 right-4 w-10 h-10 rounded-full bg-[#fff5f2] hover:bg-[#ffe8df] flex items-center justify-center transition-colors text-muted-foreground text-2xl leading-none"
+                  aria-label="Fechar popup de desbloqueio"
+                >
+                  &times; {/* Usar um 'x' mais padrão */}
+                </button>
+
+                <div className="text-center space-y-4">
+                  <div className="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-gradient-to-br from-[#fff5f2] to-[#ffe8df]">
+                    <Crown className="w-10 h-10 text-[#ff6b35]" />
+                  </div>
+                  <h2 className="text-3xl font-bold text-foreground">
+                    Desbloqueie Todas as Fotos
+                  </h2>
+                  <p className="text-muted-foreground leading-relaxed">
+                    Tenha acesso completo às {processedPhotos.length} fotos
+                    profissionais em alta resolução
+                  </p>
+                </div>
+
+                {/* Pricing */}
+                <div className="bg-gradient-to-br from-[#fff5f2] to-[#ffe8df] rounded-2xl border-2 border-[#ff8c5c] p-6 space-y-4">
+                  <div className="text-center">
+                    <div className="flex items-baseline justify-center gap-2">
+                      <span className="text-5xl font-bold text-[#ff6b35]">
+                        R$ 49
+                      </span>
+                      <span className="text-muted-foreground">/pacote</span>
+                    </div>
+                    <p className="text-sm text-muted-foreground mt-2">
+                      Pagamento único
+                    </p>
+                  </div>
+
+                  <div className="space-y-3 pt-4 border-t-2 border-[#ffe8df]">
+                    {[
+                      `${processedPhotos.length} fotos profissionais em alta resolução`,
+                      "Download ilimitado",
+                      "Uso comercial permitido",
+                      "Suporte prioritário",
+                    ].map((feature, index) => (
+                      <div key={index} className="flex items-center gap-3">
+                        <div className="w-6 h-6 rounded-full bg-[#ff6b35] flex items-center justify-center flex-shrink-0">
+                          <Check className="w-4 h-4 text-white" />
+                        </div>
+                        <span className="text-sm text-foreground">
+                          {feature}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Botão Modificado para WhatsApp */}
+                <Link
+                  href="https://wa.me/SEUNUMERO?text=Ol%C3%A1%21%20Gostaria%20de%20desbloquear%20minhas%20fotos%20do%20Fotograf-IA." // <-- SUBSTITUA SEUNUMERO
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  passHref
+                >
+                  <Button
+                    size="lg"
+                    className="w-full h-14 text-base font-medium rounded-2xl bg-gradient-to-r from-[#ff6b35] to-[#f05520] text-white hover:from-[#f05520] hover:to-[#d13f0f] transition-all shadow-lg hover:shadow-xl"
+                    asChild // Importante para o Link funcionar corretamente com o Button
+                  >
+                    <span>
+                      {" "}
+                      {/* Envolver o conteúdo em um span */}
+                      <Zap className="mr-2 w-5 h-5" />
+                      Desbloquear via WhatsApp
+                    </span>
+                  </Button>
+                </Link>
+
+                <p className="text-xs text-center text-muted-foreground">
+                  Pagamento seguro processado via WhatsApp
+                </p>
+              </div>
+            </div>
+          )}
+
+        {/* CTA Section (Só mostra se houver fotos) */}
+        {processedPhotos.length > 0 && (
+          <div className="bg-gradient-to-br from-[#fff5f2] via-[#ffe8df] to-[#ffd1bf] rounded-3xl border-2 border-[#ff8c5c] p-8 md:p-12 text-center space-y-6 shadow-xl mt-12">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-white shadow-lg">
+              <Crown className="w-8 h-8 text-[#ff6b35]" />
+            </div>
+            <div className="space-y-3">
+              <h3 className="text-2xl md:text-3xl font-bold text-foreground">
+                Pronto para Impressionar?
+              </h3>
+              <p className="text-muted-foreground max-w-xl mx-auto leading-relaxed">
+                Desbloqueie todas as suas fotos profissionais e destaque-se em
+                seus perfis profissionais
+              </p>
+            </div>
+            <Button
+              size="lg"
+              onClick={() => setShowPaywall(true)} // Este botão continua abrindo o popup
+              className="h-14 px-8 text-base font-medium rounded-2xl bg-gradient-to-r from-[#ff6b35] to-[#f05520] text-white hover:from-[#f05520] hover:to-[#d13f0f] transition-all shadow-lg hover:shadow-xl"
+            >
+              <Crown className="mr-2 w-5 h-5" />
+              Desbloquear Todas as Fotos
+            </Button>
           </div>
-          <div className="space-y-3">
-            <h3 className="text-2xl md:text-3xl font-bold text-foreground">
-              Pronto para Impressionar?
-            </h3>
-            <p className="text-muted-foreground max-w-xl mx-auto leading-relaxed">
-              Desbloqueie todas as suas fotos profissionais e destaque-se em
-              seus perfis profissionais
-            </p>
-          </div>
-          <Button
-            size="lg"
-            onClick={() => setShowPaywall(true)} // Este botão continua abrindo o popup
-            className="h-14 px-8 text-base font-medium rounded-2xl bg-gradient-to-r from-[#ff6b35] to-[#f05520] text-white hover:from-[#f05520] hover:to-[#d13f0f] transition-all shadow-lg hover:shadow-xl"
-          >
-            <Crown className="mr-2 w-5 h-5" />
-            Desbloquear Todas as Fotos
-          </Button>
-        </div>
+        )}
       </main>
     </div>
   );

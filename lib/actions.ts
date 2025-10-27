@@ -57,6 +57,6 @@ export async function signup(formData: FormData) {
     return redirect("/cadastro?message=signup-error");
   }
 
-  // Redireciona para a página de login com uma mensagem para verificar o e-mail (comportamento padrão do Supabase)
-  return redirect("/login?message=check-email");
+  // Redireciona para a página de login com a mensagem de sucesso
+  return redirect("/login?message=signup-success"); // MODIFICADO AQUI
 }
