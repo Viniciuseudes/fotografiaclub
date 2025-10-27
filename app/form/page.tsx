@@ -43,7 +43,8 @@ interface FormDataState {
 
 type FormStep = 1 | "driveLink" | 2 | 3;
 
-const EVENT_DRIVE_LINK = "https://link.do.seu.google.drive/fotos-evento";
+const EVENT_DRIVE_LINK =
+  "https://drive.google.com/drive/folders/1gj2brke8uY2AuethcKVQTUIzi7XSlEKe?usp=sharing";
 
 // --- NOVA CONSTANTE: Limite de tamanho em bytes (ex: 4MB) ---
 const MAX_FILE_SIZE_BYTES = 4 * 1024 * 1024; // 4 MB
