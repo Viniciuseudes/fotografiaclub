@@ -6,6 +6,12 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
+  // Adicione esta configuração para API routes
+  api: {
+    bodyParser: {
+      sizeLimit: '50mb', // Aumenta o limite para 50MB
+    },
+  },
 }
 
-export default nextConfig
+export default nextConfig 
