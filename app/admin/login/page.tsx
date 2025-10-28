@@ -1,39 +1,41 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 export default function AdminLogin() {
-  const [password, setPassword] = useState("")
-  const [error, setError] = useState("")
-  const router = useRouter()
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const router = useRouter();
 
   const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
 
     // Senha simples para MVP - você pode mudar isso
-    const ADMIN_PASSWORD = "admin123"
+    const ADMIN_PASSWORD = "admin123";
 
     if (password === ADMIN_PASSWORD) {
       // Salva no localStorage que está autenticado
-      localStorage.setItem("isAdmin", "true")
-      router.push("/admin")
+      localStorage.setItem("isAdmin", "true");
+      router.push("/admin");
     } else {
-      setError("Senha incorreta")
+      setError("Senha incorreta");
     }
-  }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 to-white flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="bg-white rounded-2xl shadow-lg p-8 border border-orange-100">
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Área Administrativa</h1>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+              Área Administrativa
+            </h1>
             <p className="text-gray-600">Fotograf-IA</p>
           </div>
 
@@ -45,8 +47,8 @@ export default function AdminLogin() {
                 type="password"
                 value={password}
                 onChange={(e) => {
-                  setPassword(e.target.value)
-                  setError("")
+                  setPassword(e.target.value);
+                  setError("");
                 }}
                 placeholder="Digite a senha"
                 className="border-orange-200 focus:border-orange-500"
@@ -66,12 +68,10 @@ export default function AdminLogin() {
             <p className="text-sm text-gray-700">
               <strong>Senha padrão:</strong> admin123
             </p>
-            <p className="text-xs text-gray-600 mt-1">
-              Altere isso em <code className="bg-white px-1 rounded">app/admin/login/page.tsx</code>
-            </p>
+            <p className="text-xs text-gray-600 mt-1"></p>
           </div>
         </div>
       </div>
     </div>
-  )
+  );
 }
