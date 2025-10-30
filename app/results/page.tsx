@@ -12,6 +12,7 @@ import {
   Zap,
   Loader2,
   Clock,
+  CreditCard, // Importei o ícone de Cartão de Crédito
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -233,7 +234,7 @@ export default function ResultsPage() {
           </h1>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
             {processedPhotos.length > 0
-              ? `Geramos ${processedPhotos.length} fotos profissionais usando IA. Desbloqueie todas para usar em seus perfis.`
+              ? `Geramos ${processedPhotos.length} fotos profissionais. Sua amostra grátis está abaixo! Desbloqueie o pacote completo.`
               : "As fotos processadas estarão disponíveis aqui em breve."}
           </p>
         </div>
@@ -282,7 +283,7 @@ export default function ResultsPage() {
                       <div className="absolute top-4 left-4 px-3 py-1.5 rounded-full bg-gradient-to-r from-[#ff6b35] to-[#f05520] text-white text-sm font-medium shadow-lg">
                         <span className="flex items-center">
                           <Check className="w-3 h-3 mr-1" />
-                          Preview
+                          Preview Grátis
                         </span>
                       </div>
                     )}
@@ -319,84 +320,165 @@ export default function ResultsPage() {
         {showPaywall &&
           processedPhotos.length > 0 && ( // Só mostra se houver fotos
             <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-6 animate-in fade-in duration-300">
-              <div className="bg-white rounded-3xl max-w-lg w-full p-8 space-y-6 shadow-2xl animate-in zoom-in slide-in-from-bottom-8 duration-500 relative">
+              <div className="bg-white rounded-3xl max-w-lg w-full p-8 space-y-6 shadow-2xl animate-in zoom-in slide-in-from-bottom-8 duration-500 relative max-h-[90vh] overflow-y-auto">
                 <button
                   onClick={() => setShowPaywall(false)}
-                  className="absolute top-4 right-4 w-10 h-10 rounded-full bg-[#fff5f2] hover:bg-[#ffe8df] flex items-center justify-center transition-colors text-muted-foreground text-2xl leading-none"
+                  className="absolute top-4 right-4 w-10 h-10 rounded-full bg-[#fff5f2] hover:bg-[#ffe8df] flex items-center justify-center transition-colors text-muted-foreground text-2xl leading-none z-10"
                   aria-label="Fechar popup de desbloqueio"
                 >
                   &times; {/* Usar um 'x' mais padrão */}
                 </button>
 
-                <div className="text-center space-y-4">
+                <div className="text-center space-y-4 pt-8 sm:pt-4">
                   <div className="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-gradient-to-br from-[#fff5f2] to-[#ffe8df]">
                     <Crown className="w-10 h-10 text-[#ff6b35]" />
                   </div>
                   <h2 className="text-3xl font-bold text-foreground">
-                    Desbloqueie Todas as Fotos
+                    Desbloqueie Suas Fotos
                   </h2>
                   <p className="text-muted-foreground leading-relaxed">
-                    Tenha acesso completo às {processedPhotos.length} fotos
-                    profissionais em alta resolução
+                    Escolha o pacote que mais combina com você:
                   </p>
                 </div>
 
-                {/* Pricing */}
-                <div className="bg-gradient-to-br from-[#fff5f2] to-[#ffe8df] rounded-2xl border-2 border-[#ff8c5c] p-6 space-y-4">
-                  <div className="text-center">
-                    <div className="flex items-baseline justify-center gap-2">
-                      <span className="text-5xl font-bold text-[#ff6b35]">
-                        R$ 49
-                      </span>
-                      <span className="text-muted-foreground">/pacote</span>
+                {/* --- INÍCIO DO BLOCO DE PREÇOS ATUALIZADO --- */}
+                <div className="space-y-4">
+                  {/* OFERTA 1: PACOTE HEALTH SUMMIT */}
+                  <div className="bg-gradient-to-br from-[#fff5f2] to-[#ffe8df] rounded-2xl border-2 border-[#ff8c5c] p-6 space-y-4 relative overflow-hidden">
+                    {/* Selo de Destaque */}
+                    <div className="absolute -top-1 -right-1 w-24 h-24">
+                      <div className="absolute transform rotate-45 bg-gradient-to-r from-[#ff6b35] to-[#f05520] text-white text-xs font-bold text-center py-1 right-[-40px] top-[32px] w-[170px] shadow-lg">
+                        Health Summit
+                      </div>
                     </div>
-                    <p className="text-sm text-muted-foreground mt-2">
-                      Pagamento único
-                    </p>
-                  </div>
 
-                  <div className="space-y-3 pt-4 border-t-2 border-[#ffe8df]">
-                    {[
-                      `${processedPhotos.length} fotos profissionais em alta resolução`,
-                      "Download ilimitado",
-                      "Uso comercial permitido",
-                      "Suporte prioritário",
-                    ].map((feature, index) => (
-                      <div key={index} className="flex items-center gap-3">
-                        <div className="w-6 h-6 rounded-full bg-[#ff6b35] flex items-center justify-center flex-shrink-0">
-                          <Check className="w-4 h-4 text-white" />
-                        </div>
-                        <span className="text-sm text-foreground">
-                          {feature}
+                    <div className="text-center space-y-2">
+                      <h3 className="text-xl font-bold text-foreground">
+                        Pacote Evento
+                      </h3>
+                      <p className="text-sm text-muted-foreground">
+                        Exclusivo para participantes do Health Summit!
+                      </p>
+                      <div className="flex items-baseline justify-center gap-3 pt-2">
+                        <span className="text-2xl font-medium text-muted-foreground line-through">
+                          R$ 199,00
+                        </span>
+                        <span className="text-5xl font-extrabold text-[#ff6b35]">
+                          R$ 99,90
                         </span>
                       </div>
-                    ))}
+                      <p className="text-xs text-muted-foreground">
+                        Pagamento único
+                      </p>
+                    </div>
+
+                    <div className="space-y-3 pt-4 border-t-2 border-[#ffe8df]">
+                      {[
+                        `Pacote com ${
+                          processedPhotos.length - 1
+                        } fotos restantes em alta resolução`, // Ex: 11-1 = 10
+                        "Download ilimitado",
+                        "Uso comercial permitido",
+                      ].map((feature, index) => (
+                        <div key={index} className="flex items-center gap-3">
+                          <div className="w-6 h-6 rounded-full bg-[#ff6b35] flex items-center justify-center flex-shrink-0">
+                            <Check className="w-4 h-4 text-white" />
+                          </div>
+                          <span className="text-sm text-foreground">
+                            {feature}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Botão Pagar.me */}
+                    <Link
+                      href="https://payment-link-v3.pagar.me/pl_1v7m3AZMyaN9EdxIYHPZEBKneWRYVzp6" // SEU LINK DE PAGAMENTO
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      passHref
+                    >
+                      <Button
+                        size="lg"
+                        className="w-full h-14 text-base font-medium rounded-2xl bg-gradient-to-r from-[#ff6b35] to-[#f05520] text-white hover:from-[#f05520] hover:to-[#d13f0f] transition-all shadow-lg hover:shadow-xl"
+                        asChild
+                      >
+                        <span>
+                          <CreditCard className="mr-2 w-5 h-5" />
+                          Pagar Agora (R$ 99,90)
+                        </span>
+                      </Button>
+                    </Link>
+                  </div>
+
+                  {/* Divisor */}
+                  <div className="flex items-center gap-2">
+                    <div className="flex-1 h-px bg-border"></div>
+                    <span className="text-xs font-medium text-muted-foreground">
+                      OU
+                    </span>
+                    <div className="flex-1 h-px bg-border"></div>
+                  </div>
+
+                  {/* OFERTA 2: ENSAIO PERSONALIZADO */}
+                  <div className="bg-white rounded-2xl border-2 border-border p-6 space-y-4">
+                    <div className="text-center space-y-2">
+                      <h3 className="text-xl font-bold text-foreground">
+                        Ensaio Personalizado
+                      </h3>
+                      <p className="text-sm text-muted-foreground">
+                        Ideal para quem quer se posicionar no seu nicho.
+                      </p>
+                      <div className="flex items-baseline justify-center gap-3 pt-2">
+                        <span className="text-5xl font-extrabold text-foreground">
+                          R$ 199,90
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="space-y-3 pt-4 border-t-2 border-border">
+                      {[
+                        "Sessão de fotos dedicada",
+                        "Direção de arte e pose",
+                        "Múltiplos cenários e looks",
+                        "Entrega de alta qualidade",
+                      ].map((feature, index) => (
+                        <div key={index} className="flex items-center gap-3">
+                          <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
+                            <Check className="w-4 h-4 text-primary" />
+                          </div>
+                          <span className="text-sm text-foreground">
+                            {feature}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Botão WhatsApp 2 (Mantido) */}
+                    <Link
+                      href="https://wa.me/SEUNUMERO?text=Ol%C3%A1%21%20Gostaria%20de%20saber%20mais%20sobre%20o%20Ensaio%20Personalizado%20de%20R%24199%2C90." // <-- SUBSTITUA SEUNUMERO
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      passHref
+                    >
+                      <Button
+                        size="lg"
+                        variant="outline" // Botão diferenciado
+                        className="w-full h-14 text-base font-medium rounded-2xl border-2 border-primary text-primary hover:bg-primary/5 hover:text-primary"
+                        asChild
+                      >
+                        <span>
+                          <Zap className="mr-2 w-5 h-5" />
+                          Agendar via WhatsApp
+                        </span>
+                      </Button>
+                    </Link>
                   </div>
                 </div>
-
-                {/* Botão Modificado para WhatsApp */}
-                <Link
-                  href="https://wa.me/SEUNUMERO?text=Ol%C3%A1%21%20Gostaria%20de%20desbloquear%20minhas%20fotos%20do%20Fotograf-IA." // <-- SUBSTITUA SEUNUMERO
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  passHref
-                >
-                  <Button
-                    size="lg"
-                    className="w-full h-14 text-base font-medium rounded-2xl bg-gradient-to-r from-[#ff6b35] to-[#f05520] text-white hover:from-[#f05520] hover:to-[#d13f0f] transition-all shadow-lg hover:shadow-xl"
-                    asChild // Importante para o Link funcionar corretamente com o Button
-                  >
-                    <span>
-                      {" "}
-                      {/* Envolver o conteúdo em um span */}
-                      <Zap className="mr-2 w-5 h-5" />
-                      Desbloquear via WhatsApp
-                    </span>
-                  </Button>
-                </Link>
+                {/* --- FIM DO BLOCO DE PREÇOS ATUALIZADO --- */}
 
                 <p className="text-xs text-center text-muted-foreground">
-                  Pagamento seguro processado via WhatsApp
+                  Pagamento seguro.
                 </p>
               </div>
             </div>
@@ -423,7 +505,7 @@ export default function ResultsPage() {
               className="h-14 px-8 text-base font-medium rounded-2xl bg-gradient-to-r from-[#ff6b35] to-[#f05520] text-white hover:from-[#f05520] hover:to-[#d13f0f] transition-all shadow-lg hover:shadow-xl"
             >
               <Crown className="mr-2 w-5 h-5" />
-              Desbloquear Todas as Fotos
+              Ver Opções de Desbloqueio
             </Button>
           </div>
         )}
