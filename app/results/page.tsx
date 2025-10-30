@@ -392,7 +392,7 @@ export default function ResultsPage() {
 
                     {/* Botão Pagar.me */}
                     <Link
-                      href="https://payment-link-v3.pagar.me/pl_1v7m3AZMyaN9EdxIYHPZEBKneWRYVzp6" // SEU LINK DE PAGAMENTO
+                      href="https://payment-link-v3.pagar.me/pl_z5MnXg4bVLO2EbyC8SN70v6mqw139Ya7" // SEU LINK DE PAGAMENTO
                       target="_blank"
                       rel="noopener noreferrer"
                       passHref
