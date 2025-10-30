@@ -62,7 +62,11 @@ export async function POST(request: NextRequest) {
     console.error("[v0] API Error in POST /api/submissions:", error);
     // Verifica se é um erro conhecido do Supabase para dar uma resposta mais específica
      if (error && typeof error === 'object' && 'code' in error) {
-       return NextResponse.json({ error: `Database error: ${error.message}` }, { status: 500 });
+       const message =
+         'message' in error && typeof (error as any).message === 'string'
+           ? (error as any).message
+           : JSON.stringify(error);
+       return NextResponse.json({ error: `Database error: ${message}` }, { status: 500 });
      }
     return NextResponse.json(
       { error: "Failed to create initial submission" },
