@@ -374,9 +374,8 @@ export default function ResultsPage() {
 
                     <div className="space-y-3 pt-4 border-t-2 border-[#ffe8df]">
                       {[
-                        `Pacote com ${
-                          processedPhotos.length - 1
-                        } fotos restantes em alta resolução`, // Ex: 11-1 = 10
+                        `Pacote com 11 fotos
+                         em alta resolução`, // Ex: 11-1 = 10
                         "Download ilimitado",
                         "Uso comercial permitido",
                       ].map((feature, index) => (
