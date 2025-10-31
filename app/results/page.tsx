@@ -113,12 +113,12 @@ export default function ResultsPage() {
     (p) => p.photo_type === "processed"
   );
 
-  // --- MODIFICAÇÃO PARA INCLUIR pending_drive_link ---
-  // Considere 'pending_drive_link' também como um estado de espera/processamento inicial
+  // --- MODIFICAÇÃO PARA INCLUIR awaiting_photo ---
+  // Agora 'awaiting_photo' também é um estado de espera
   const isWaitingOrProcessing =
     submission.status === "pending" ||
     submission.status === "processing" ||
-    submission.status === "pending_drive_link"; // Adicionado aqui
+    submission.status === "awaiting_photo"; // Adicionado aqui
 
   // Use a nova variável na condição if
   if (isWaitingOrProcessing) {
@@ -142,17 +142,18 @@ export default function ResultsPage() {
             <div className="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-gradient-to-br from-[#fff5f2] to-[#ffe8df] mb-4 animate-pulse">
               <Clock className="w-10 h-10 text-[#ff6b35]" />
             </div>
-            {/* Ajusta o título se necessário */}
+            {/* Ajusta o título dinamicamente */}
             <h1 className="text-4xl font-bold text-foreground">
-              {submission.status === "pending_drive_link"
-                ? "Enviando Fotos..."
+              {submission.status === "awaiting_photo"
+                ? "Aguardando sua Foto"
                 : submission.status === "pending"
                 ? "Suas Fotos Estão na Fila!"
                 : "Processando suas Fotos"}
             </h1>
             <p className="text-lg text-muted-foreground leading-relaxed">
-              Nossa IA está trabalhando para criar suas fotos profissionais.
-              Você receberá um e-mail quando estiverem prontas (até 24 horas).
+              {submission.status === "awaiting_photo"
+                ? "Você concluiu o primeiro passo! Agora só falta enviar sua foto para nossa IA começar a trabalhar."
+                : "Nossa IA está trabalhando para criar suas fotos profissionais. Você receberá um e-mail quando estiverem prontas (até 24 horas)."}
             </p>
 
             <div className="bg-gradient-to-br from-[#fff5f2] to-[#ffe8df] rounded-3xl border-2 border-[#ff8c5c] p-8 space-y-4">
@@ -172,22 +173,33 @@ export default function ResultsPage() {
               </div>
               <p className="text-sm text-foreground font-medium">
                 Status: {/* Ajusta o texto do status */}
-                {submission.status === "pending_drive_link"
-                  ? "Enviando..."
+                {submission.status === "awaiting_photo"
+                  ? "Aguardando envio da foto"
                   : submission.status === "pending"
                   ? "Aguardando processamento"
                   : "Em processamento"}
               </p>
             </div>
 
-            <Button
-              variant="outline"
-              className="border-2 border-[#ffe8df] bg-transparent"
-              // Adiciona um refresh para o caso de ter caído no pending_drive_link por timing
-              onClick={() => window.location.reload()}
-            >
-              <span>Verificar Status</span>
-            </Button>
+            {/* MODIFICADO: Botão condicional */}
+            {submission.status === "awaiting_photo" ? (
+              <Button
+                asChild
+                variant="outline"
+                className="border-2 border-[#ffe8df] bg-transparent"
+              >
+                <Link href="/form">Voltar ao Formulário</Link>
+              </Button>
+            ) : (
+              <Button
+                variant="outline"
+                className="border-2 border-[#ffe8df] bg-transparent"
+                onClick={() => window.location.reload()}
+              >
+                <span>Verificar Status</span>
+              </Button>
+            )}
+
             <Button
               asChild
               variant="link"
@@ -348,7 +360,7 @@ export default function ResultsPage() {
                     {/* Selo de Destaque */}
                     <div className="absolute -top-1 -right-1 w-24 h-24">
                       <div className="absolute transform rotate-45 bg-gradient-to-r from-[#ff6b35] to-[#f05520] text-white text-xs font-bold text-center py-1 right-[-40px] top-[32px] w-[170px] shadow-lg">
-                        Health Summit
+                        VIIIFórum
                       </div>
                     </div>
 
@@ -357,7 +369,8 @@ export default function ResultsPage() {
                         Pacote Evento
                       </h3>
                       <p className="text-sm text-muted-foreground">
-                        Exclusivo para participantes do Health Summit!
+                        Exclusivo para participantes do VIIIFórum de atualização
+                        médica!
                       </p>
                       <div className="flex items-baseline justify-center gap-3 pt-2">
                         <span className="text-2xl font-medium text-muted-foreground line-through">

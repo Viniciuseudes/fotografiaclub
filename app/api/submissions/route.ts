@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
         user_specialty: specialty, // Salvar especialidade específica
         desired_elements: desiredElements, // Salvar elementos desejados
         phone: user.user_metadata?.phone, // Pegar telefone dos metadados do usuário
-        status: "pending_drive_link", // NOVO STATUS: Indica que o usuário precisa ver o link do drive
+        status: "awaiting_photo", // MODIFICADO: Indica que o usuário precisa enviar a foto
       })
       .select()
       .single();

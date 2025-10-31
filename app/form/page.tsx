@@ -41,10 +41,9 @@ interface FormDataState {
 }
 // --- Fim Interfaces ---
 
-type FormStep = 1 | "driveLink" | 2 | 3;
+type FormStep = 1 | 2 | 3; // MODIFICADO: Removido "driveLink"
 
-const EVENT_DRIVE_LINK =
-  "https://drive.google.com/drive/folders/1gj2brke8uY2AuethcKVQTUIzi7XSlEKe?usp=sharing";
+// REMOVIDO: const EVENT_DRIVE_LINK = ...
 
 // --- NOVA CONSTANTE: Limite de tamanho em bytes (ex: 4MB) ---
 const MAX_FILE_SIZE_BYTES = 4 * 1024 * 1024; // 4 MB
@@ -85,7 +84,7 @@ export default function FormPage() {
     { value: "enfermeiro", label: "Enfermeiro(a)" },
   ];
 
-  // --- UseEffect ---
+  // --- UseEffect (MODIFICADO) ---
   useEffect(() => {
     const checkUserAndSubmission = async () => {
       setIsLoadingStatus(true);
@@ -122,9 +121,12 @@ export default function FormPage() {
           router.push(`/results?id=${submission.id}`);
           return;
         }
-        if (submission.status === "pending_drive_link") {
-          setCurrentStep("driveLink");
+
+        // MODIFICADO: Se estiver aguardando foto, vá para a etapa 2
+        if (submission.status === "awaiting_photo") {
+          setCurrentStep(2);
         }
+        // Se for 'pending' or 'processing', o render() principal cuida disso
       }
       setIsLoadingStatus(false);
     };
@@ -239,7 +241,6 @@ export default function FormPage() {
   // --- Fim Nova Função ---
 
   // --- Funções handleDrop e handleFileInput (MODIFICADAS para usar resizeImage) ---
-  // CORREÇÃO: Definição de handleDrag adicionada aqui
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -324,7 +325,7 @@ export default function FormPage() {
   const canProceedStep2 = formData.photos.length === 1 && !isLoadingImage;
   // --- Fim Validações ---
 
-  // --- Envio da Etapa 1 ---
+  // --- Envio da Etapa 1 (MODIFICADO) ---
   const handleStep1Submit = async () => {
     if (!canProceedStep1) return;
     setIsSubmittingStep1(true);
@@ -351,10 +352,10 @@ export default function FormPage() {
       const data = await response.json();
       if (data.submissionId) {
         setCreatedSubmissionId(data.submissionId);
-        setCurrentStep("driveLink");
+        setCurrentStep(2); // MODIFICADO: Pula direto para a Etapa 2
         setExistingSubmission({
           id: data.submissionId,
-          status: "pending_drive_link",
+          status: "awaiting_photo", // MODIFICADO: Define o status local correto
         });
       } else {
         throw new Error("ID da submissão não recebido da API");
@@ -439,7 +440,7 @@ export default function FormPage() {
     }
   };
 
-  // --- Navegação ---
+  // --- Navegação (MODIFICADA) ---
   const handleNext = () => {
     if (currentStep === 1 && canProceedStep1) {
       handleStep1Submit();
@@ -449,9 +450,8 @@ export default function FormPage() {
   };
 
   const handleBack = () => {
-    if (currentStep === 2) setCurrentStep("driveLink");
+    if (currentStep === 2) setCurrentStep(1); // MODIFICADO
     else if (currentStep === 3) setCurrentStep(2);
-    else if (currentStep === "driveLink") setCurrentStep(1);
   };
 
   // --- Loading Inicial ---
@@ -464,68 +464,7 @@ export default function FormPage() {
     );
   }
 
-  // --- Etapa Drive Link ---
-  const DriveLinkStep = () => (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 text-center">
-      {/* ... (código JSX do DriveLinkStep - sem mudanças) ... */}
-      <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-[#fff5f2] to-[#ffe8df] mb-4">
-        {" "}
-        <Check className="w-8 h-8 text-[#ff6b35]" />{" "}
-      </div>
-      <h2 className="text-3xl font-bold text-foreground">
-        {" "}
-        Informações Recebidas!{" "}
-      </h2>
-      <p className="text-muted-foreground max-w-md mx-auto">
-        {" "}
-        Seu cadastro inicial foi concluído. Acesse as fotos do evento no link
-        abaixo.{" "}
-      </p>
-      <div className="bg-white rounded-3xl border-2 border-[#ffe8df] p-8 space-y-6 shadow-lg">
-        <p className="font-medium text-lg">Fotos do Evento:</p>
-        <Button
-          variant="outline"
-          size="lg"
-          className="w-full h-14 text-base font-medium rounded-2xl border-2 border-[#ffe8df] hover:bg-[#fff5f2] justify-center text-[#ff6b35] hover:text-[#f05520] hover:border-[#ff8c5c]"
-          asChild
-        >
-          <a href={EVENT_DRIVE_LINK} target="_blank" rel="noopener noreferrer">
-            {" "}
-            <ExternalLink className="mr-2 w-5 h-5" /> Acessar Pasta no Google
-            Drive{" "}
-          </a>
-        </Button>
-        <p className="text-xs text-muted-foreground">
-          {" "}
-          Abra o link para visualizar e baixar as fotos.{" "}
-        </p>
-      </div>
-      <p className="text-muted-foreground pt-4">
-        {" "}
-        Gostaria de transformar suas próprias fotos com nossa IA?{" "}
-      </p>
-      <Button
-        onClick={() => setCurrentStep(2)}
-        size="lg"
-        className="w-full h-14 text-base font-medium rounded-2xl bg-gradient-to-r from-[#ff6b35] to-[#f05520] text-white hover:from-[#f05520] hover:to-[#d13f0f] transition-all shadow-lg hover:shadow-xl"
-        disabled={isSubmittingStep1}
-      >
-        {" "}
-        <ImageUp className="mr-2 w-5 h-5" /> Sim, Transformar Minhas Fotos com
-        IA{" "}
-      </Button>
-      <Button
-        onClick={handleBack}
-        variant="ghost"
-        size="sm"
-        className="mt-4 text-muted-foreground"
-        disabled={isSubmittingStep1}
-      >
-        {" "}
-        <ArrowLeft className="mr-1 w-4 h-4" /> Voltar e Editar Informações{" "}
-      </Button>
-    </div>
-  );
+  // --- ETAPA DRIVE LINK REMOVIDA ---
 
   console.log("Estado atual do formData:", formData);
   console.log("Etapa atual:", currentStep);
@@ -576,7 +515,7 @@ export default function FormPage() {
         (existingSubmission.status === "pending" ||
           existingSubmission.status === "processing") ? (
           <div className="text-center space-y-6 flex flex-col items-center justify-center h-full pt-10">
-            {/* ... (código da tela de processamento) ... */}
+            {/* ... (código da tela de processamento - SEM MUDANÇAS) ... */}
             <div className="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-gradient-to-br from-[#fff5f2] to-[#ffe8df] mb-4 animate-pulse">
               {" "}
               <Clock className="w-10 h-10 text-[#ff6b35]" />{" "}
@@ -630,81 +569,77 @@ export default function FormPage() {
           </div>
         ) : (
           <>
-            {currentStep !== "driveLink" && (
-              // ... (código visual dos steps - sem mudanças) ...
-              <div className="mb-12">
-                {(() => {
-                  let displayStepNumeric: number;
-                  const stepKey = String(currentStep);
-                  if (stepKey === "1" || stepKey === "driveLink")
-                    displayStepNumeric = 1;
-                  else if (stepKey === "2") displayStepNumeric = 2;
-                  else if (stepKey === "3") displayStepNumeric = 3;
-                  else displayStepNumeric = 1;
+            {/* MODIFICADO: Stepper visual (removida a condição driveLink) */}
+            <div className="mb-12">
+              {(() => {
+                let displayStepNumeric: number;
+                const stepKey = String(currentStep);
+                if (stepKey === "1")
+                  // REMOVIDO: || stepKey === "driveLink"
+                  displayStepNumeric = 1;
+                else if (stepKey === "2") displayStepNumeric = 2;
+                else if (stepKey === "3") displayStepNumeric = 3;
+                else displayStepNumeric = 1;
 
-                  const steps = [1, 2, 3];
-                  const labels = ["Informações", "Sua Foto", "Confirmação"];
+                const steps = [1, 2, 3];
+                const labels = ["Informações", "Sua Foto", "Confirmação"];
 
-                  return (
-                    <>
-                      <div className="flex items-center justify-between mb-4">
-                        {steps.map((stepNum) => (
+                return (
+                  <>
+                    <div className="flex items-center justify-between mb-4">
+                      {steps.map((stepNum) => (
+                        <div key={stepNum} className="flex items-center flex-1">
+                          {" "}
                           <div
-                            key={stepNum}
-                            className="flex items-center flex-1"
+                            className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold transition-all ${
+                              stepNum < displayStepNumeric
+                                ? "bg-[#ff6b35] text-white shadow-lg"
+                                : stepNum === displayStepNumeric
+                                ? "bg-gradient-to-br from-[#ff6b35] to-[#f05520] text-white shadow-xl scale-110"
+                                : "bg-[#fff5f2] text-[#ff8c5c] border-2 border-[#ffe8df]"
+                            }`}
                           >
                             {" "}
-                            <div
-                              className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold transition-all ${
-                                stepNum < displayStepNumeric
-                                  ? "bg-[#ff6b35] text-white shadow-lg"
-                                  : stepNum === displayStepNumeric
-                                  ? "bg-gradient-to-br from-[#ff6b35] to-[#f05520] text-white shadow-xl scale-110"
-                                  : "bg-[#fff5f2] text-[#ff8c5c] border-2 border-[#ffe8df]"
-                              }`}
-                            >
-                              {" "}
-                              {stepNum < displayStepNumeric ? (
-                                <Check className="w-5 h-5" />
-                              ) : (
-                                stepNum
-                              )}{" "}
-                            </div>{" "}
-                            {stepNum < steps.length && (
-                              <div
-                                className={`flex-1 h-1 mx-2 rounded-full transition-all ${
-                                  stepNum < displayStepNumeric
-                                    ? "bg-[#ff6b35]"
-                                    : "bg-[#ffe8df]"
-                                }`}
-                              />
+                            {stepNum < displayStepNumeric ? (
+                              <Check className="w-5 h-5" />
+                            ) : (
+                              stepNum
                             )}{" "}
-                          </div>
-                        ))}
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        {labels.map((label, index) => (
-                          <span
-                            key={label}
-                            className={
-                              steps[index] === displayStepNumeric
-                                ? "text-[#ff6b35] font-medium"
-                                : "text-muted-foreground"
-                            }
-                          >
-                            {" "}
-                            {label}{" "}
-                          </span>
-                        ))}
-                      </div>
-                    </>
-                  );
-                })()}
-              </div>
-            )}
+                          </div>{" "}
+                          {stepNum < steps.length && (
+                            <div
+                              className={`flex-1 h-1 mx-2 rounded-full transition-all ${
+                                stepNum < displayStepNumeric
+                                  ? "bg-[#ff6b35]"
+                                  : "bg-[#ffe8df]"
+                              }`}
+                            />
+                          )}{" "}
+                        </div>
+                      ))}
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      {labels.map((label, index) => (
+                        <span
+                          key={label}
+                          className={
+                            steps[index] === displayStepNumeric
+                              ? "text-[#ff6b35] font-medium"
+                              : "text-muted-foreground"
+                          }
+                        >
+                          {" "}
+                          {label}{" "}
+                        </span>
+                      ))}
+                    </div>
+                  </>
+                );
+              })()}
+            </div>
 
             {currentStep === 1 && (
-              // ... (código JSX da Etapa 1 - sem mudanças) ...
+              // ... (código JSX da Etapa 1 - SEM MUDANÇAS) ...
               <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
                 <div className="text-center space-y-2">
                   {" "}
@@ -862,13 +797,14 @@ export default function FormPage() {
               </div>
             )}
 
-            {currentStep === "driveLink" && <DriveLinkStep />}
+            {/* REMOVIDO: {currentStep === "driveLink" && <DriveLinkStep />} */}
 
             {currentStep === 2 && (
+              // ... (código JSX da Etapa 2 - SEM MUDANÇAS) ...
               <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
                 {/* Cabeçalho Step 2 */}
                 <div className="text-center space-y-2">
-                  {/* ... (código do cabeçalho) ... */}
+                  {" "}
                   <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-[#fff5f2] to-[#ffe8df] mb-4">
                     {" "}
                     <Upload className="w-8 h-8 text-[#ff6b35]" />{" "}
@@ -882,16 +818,16 @@ export default function FormPage() {
                     Envie 1 foto para a IA processar{" "}
                   </p>
                 </div>
-                {/* Área de Upload (COM handleDrag CORRIGIDO) */}
+                {/* Área de Upload */}
                 <div
                   className={`relative bg-white rounded-3xl border-2 border-dashed p-12 text-center transition-all ${
                     dragActive
                       ? "border-[#ff6b35] bg-[#fff5f2]"
                       : "border-[#ffe8df] hover:border-[#ff8c5c]"
                   } ${isLoadingImage ? "opacity-50 cursor-wait" : ""}`}
-                  onDragEnter={handleDrag} // CORRIGIDO
-                  onDragLeave={handleDrag} // CORRIGIDO
-                  onDragOver={handleDrag} // CORRIGIDO
+                  onDragEnter={handleDrag}
+                  onDragLeave={handleDrag}
+                  onDragOver={handleDrag}
                   onDrop={handleDrop}
                 >
                   <input
@@ -902,7 +838,7 @@ export default function FormPage() {
                     disabled={isLoadingImage}
                   />
                   <div className="space-y-4 pointer-events-none">
-                    {/* ... (código interno da área de drop) ... */}
+                    {" "}
                     <div className="w-20 h-20 mx-auto rounded-2xl bg-gradient-to-br from-[#fff5f2] to-[#ffe8df] flex items-center justify-center">
                       {" "}
                       {isLoadingImage ? (
@@ -932,7 +868,6 @@ export default function FormPage() {
                 </div>
                 {/* Preview da Foto */}
                 {formData.photos.length > 0 && (
-                  // ... (código do preview) ...
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
                       {" "}
@@ -973,7 +908,7 @@ export default function FormPage() {
                 )}
                 {/* Botões Step 2 */}
                 <div className="flex gap-4">
-                  {/* ... (código dos botões Voltar/Continuar) ... */}
+                  {" "}
                   <Button
                     onClick={handleBack}
                     variant="outline"
@@ -1000,7 +935,7 @@ export default function FormPage() {
             )}
 
             {currentStep === 3 && (
-              // ... (código JSX da Etapa 3 - sem mudanças) ...
+              // ... (código JSX da Etapa 3 - SEM MUDANÇAS) ...
               <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
                 <div className="text-center space-y-2">
                   {" "}

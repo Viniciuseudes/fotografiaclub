@@ -179,18 +179,21 @@ export default function AdminPage() {
     // Remove o loading visual aqui se adicionado
   };
 
+  // MODIFICADO: Adicionado 'awaiting_photo'
   const getStatusBadge = (status: string) => {
     const styles = {
-      pending_drive_link: "bg-[#fff0e6] text-[#ff8c1a] border-[#ffd9b3]", // Novo estilo para link pendente
+      awaiting_photo: "bg-[#fff0e6] text-[#ff8c1a] border-[#ffd9b3]", // NOVO
+      pending_drive_link: "bg-[#fff0e6] text-[#ff8c1a] border-[#ffd9b3]", // Mantido por segurança
       pending: "bg-[#fff5f2] text-[#ff6b35] border-[#ffe8df]",
       processing: "bg-[#ffe8df] text-[#f05520] border-[#ffd1bf]",
       completed: "bg-[#d4edda] text-[#155724] border-[#c3e6cb]",
       "processing...":
-        "bg-gray-200 text-gray-600 border-gray-300 animate-pulse", // Estilo para loading visual
-      unknown: "bg-gray-200 text-gray-600 border-gray-300", // Estilo para status desconhecido
+        "bg-gray-200 text-gray-600 border-gray-300 animate-pulse",
+      unknown: "bg-gray-200 text-gray-600 border-gray-300",
     };
     const labels = {
-      pending_drive_link: "Aguardando Foto", // Novo label
+      awaiting_photo: "Aguardando Foto", // NOVO
+      pending_drive_link: "Aguardando Foto", // Mantido por segurança
       pending: "Aguardando Processamento",
       processing: "Processando",
       completed: "Concluído",
@@ -500,9 +503,9 @@ export default function AdminPage() {
                             )}
 
                             <div className="flex flex-col sm:flex-row gap-3">
-                              {/* Botão Marcar como Processando só aparece se status for 'pending' ou 'pending_drive_link' */}
+                              {/* MODIFICADO: Botão Marcar como Processando (adicionado 'awaiting_photo') */}
                               {(submission.status === "pending" ||
-                                submission.status === "pending_drive_link") && (
+                                submission.status === "awaiting_photo") && (
                                 <Button
                                   onClick={() =>
                                     updateStatus(submission.id, "processing")

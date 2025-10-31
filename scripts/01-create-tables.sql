@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS submissions (
   user_specialty TEXT NOT NULL,
   desired_elements TEXT NOT NULL,
   phone TEXT,
- status TEXT DEFAULT 'pending' CHECK (status IN ('pending_drive_link', 'pending', 'processing', 'completed')),
+ status TEXT DEFAULT 'awaiting_photo' CHECK (status IN ('awaiting_photo', 'pending', 'processing', 'completed')),
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
